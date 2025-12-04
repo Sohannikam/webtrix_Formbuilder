@@ -1,4 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
+import { API_BASE_URL } from '@config/config';
+import { fetchJson } from '@utils/fetchJson';
 import {
   DndContext,
   MouseSensor,
@@ -15,6 +17,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Trash2, Copy, Eye, Settings, Download, Upload, ChevronDown, ChevronRight } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
+
 /******************************
  * TYPES & CONSTANTS
  ******************************/
@@ -73,35 +76,71 @@ function SortableItem({ id, children, className }) {
     transform: CSS.Transform.toString(transform),
     transition,
   };
-  return (
-    <div ref={setNodeRef} style={style} className={className} {...attributes} {...listeners}>
-      {children}
-    </div>
-  );
+  return children({ setNodeRef, style, attributes, listeners });
+
 }
 
 /******************************
  * FIELD RENDERERS (Builder + Preview)
  ******************************/
-function FieldPreview({ field, value, onChange, readOnly }) {
+function FieldPreview({ field, value, onChange, editMode, patchField }) {
   const required = field.required ? "*" : "";
-  const common = (
+  // const common = (
+  //   <label className="block text-sm font-medium text-gray-700 mb-1">
+  //     {field.label} {required && <span className="text-red-500">*</span>}
+  //   </label>
+  // );
+
+const Label = () => {
+  const [draftLabel, setDraftLabel] = useState(field.label);
+
+  useEffect(() => {
+    setDraftLabel(field.label);
+  }, [field.label]);
+
+  if (editMode) {
+    return (
+      <div className="mb-1">
+        <div className="flex items-center gap-1">
+          {/* Editable input  */}
+            {/* Required * (also visible in edit mode) */}
+          {field.required && <span className="text-red-500 mr-1">*</span>}
+      <input
+        className="block text-sm font-medium text-red-700 mb-1 border-b outline-none"
+        value={draftLabel}
+        onClick={(e)=> e.stopPropagation()}
+        onFocus={(e)=> e.stopPropagation()}
+        onChange={(e) => setDraftLabel(e.target.value)}
+        onBlur={() => patchField({ id: field.id, label: draftLabel })}
+      />
+
+     
+      </div>
+      </div>
+    );
+  }
+
+  return (
     <label className="block text-sm font-medium text-gray-700 mb-1">
-      {field.label} {required && <span className="text-red-500">*</span>}
+      {field.required && <span className="text-red-500 mr-1">*</span>}
+      {field.label}
+      
     </label>
   );
+};
+
 
   if (field.type === "short_text")
     return (
       <div className="mb-4">
-        {common}
+        <Label />
         <input
           type="text"
           className="w-full border rounded-md px-3 py-2"
           placeholder={field.placeholder || "Your answer"}
           value={value || ""}
           onChange={(e) => onChange?.(e.target.value)}
-          readOnly={readOnly}
+          readOnly={editMode}
         />
       </div>
     );
@@ -109,14 +148,14 @@ function FieldPreview({ field, value, onChange, readOnly }) {
   if (field.type === "long_text")
     return (
       <div className="mb-4">
-        {common}
+        <Label />
         <textarea
           className="w-full border rounded-md px-3 py-2"
           rows={4}
           placeholder={field.placeholder || "Your answer"}
           value={value || ""}
           onChange={(e) => onChange?.(e.target.value)}
-          readOnly={readOnly}
+          readOnly={editMode}
         />
       </div>
     );
@@ -125,14 +164,14 @@ function FieldPreview({ field, value, onChange, readOnly }) {
     const typeMap = { email: "email", phone: "tel", number: "number", date: "date" };
     return (
       <div className="mb-4">
-        {common}
+        <Label />
         <input
           type={typeMap[field.type]}
           className="w-full border rounded-md px-3 py-2"
           placeholder={field.placeholder || ""}
           value={value || ""}
           onChange={(e) => onChange?.(e.target.value)}
-          readOnly={readOnly}
+          readOnly={editMode}
         />
       </div>
     );
@@ -142,7 +181,7 @@ function FieldPreview({ field, value, onChange, readOnly }) {
     const opts = field.options || [];
     return (
       <div className="mb-4">
-        {common}
+        <Label />
         <div className="space-y-2">
           {opts.map((o) => (
             <label key={o.value} className="flex items-center gap-2">
@@ -152,7 +191,7 @@ function FieldPreview({ field, value, onChange, readOnly }) {
                 value={o.value}
                 checked={value === o.value}
                 onChange={(e) => onChange?.(e.target.value)}
-                disabled={readOnly}
+                disabled={editMode}
               />
               <span>{o.label}</span>
             </label>
@@ -167,7 +206,7 @@ function FieldPreview({ field, value, onChange, readOnly }) {
     const arr = Array.isArray(value) ? value : [];
     return (
       <div className="mb-4">
-        {common}
+        <Label />
         <div className="grid grid-cols-1 gap-2">
           {opts.map((o) => {
             const checked = arr.includes(o.value);
@@ -182,7 +221,7 @@ function FieldPreview({ field, value, onChange, readOnly }) {
                     if (e.target.checked) onChange?.([...arr, v]);
                     else onChange?.(arr.filter((x) => x !== v));
                   }}
-                  disabled={readOnly}
+                  disabled={editMode}
                 />
                 <span>{o.label}</span>
               </label>
@@ -193,33 +232,70 @@ function FieldPreview({ field, value, onChange, readOnly }) {
     );
   }
 
-  if (field.type === "dropdown") {
-    const opts = field.options || [];
+ if (field.type === "dropdown") {
+  const opts = field.options || [];
+
+  // 📌 EDIT MODE → show select but readonly
+  if (editMode) {
     return (
       <div className="mb-4">
-        {common}
+        <Label />
+
         <select
-          className="w-full border rounded-md px-3 py-2"
+          className="w-full border rounded-md px-3 py-2 bg-gray-100 cursor-default"
           value={value || ""}
-          onChange={(e) => onChange?.(e.target.value)}
-          disabled={readOnly}
+          onChange={(e) => {
+            // Prevent changing the selected value
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          // important: DO NOT USE disabled
+          readOnly // does nothing for select, but good semantics
         >
           <option value="" disabled>
             {field.placeholder || "Select..."}
           </option>
+
           {opts.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>
           ))}
         </select>
+
+        <p className="text-xs text-gray-400 mt-1">Readonly preview</p>
       </div>
     );
   }
 
+  // 📌 PREVIEW MODE → real dropdown
   return (
     <div className="mb-4">
-      {common}
+      <Label />
+
+      <select
+        className="w-full border rounded-md px-3 py-2"
+        value={value || ""}
+        onChange={(e) => onChange?.(e.target.value)}
+      >
+        <option value="" disabled>
+          {field.placeholder || "Select..."}
+        </option>
+
+        {opts.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+
+  return (
+    <div className="mb-4">
+      <Label />
       <div className="text-sm text-gray-500">Unsupported field type: {field.type}</div>
     </div>
   );
@@ -228,27 +304,44 @@ function FieldPreview({ field, value, onChange, readOnly }) {
 /******************************
  * FIELD CARD (Builder view)
  ******************************/
-function FieldCard({ field, onSelect, onDuplicate, onDelete, selected }) {
+function FieldCard({ field, onSelect, onDuplicate, onDelete, selected,patchField,dragHandle }) {
+
+  
   return (
     <div
       className={`group border rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition ${selected ? "ring-2 ring-indigo-500" : ""}`}
       onClick={onSelect}
     >
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2 text-gray-500">
+        <div className="flex items-center gap-2 text-gray-500"    {...dragHandle.attributes}
+             {...dragHandle.listeners}>
           <GripVertical className="w-4 h-4 opacity-60" />
           <span className="text-xs uppercase tracking-wide">{field.type}</span>
         </div>
         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition">
-          <button className="p-1 hover:bg-gray-100 rounded" title="Duplicate" onClick={(e) => { e.stopPropagation(); onDuplicate?.(); }}>
+          {/* <button className="p-1 hover:bg-gray-100 rounded" title="Duplicate" onClick={(e) => { e.stopPropagation(); onDuplicate?.(); }}>
             <Copy className="w-4 h-4" />
-          </button>
+          </button> */}
           <button className="p-1 hover:bg-red-50 rounded" title="Delete" onClick={(e) => { e.stopPropagation(); onDelete?.(); }}>
             <Trash2 className="w-4 h-4 text-red-600" />
           </button>
         </div>
       </div>
-      <FieldPreview field={field} readOnly />
+
+            <div className="flex items-center justify-end mb-3">
+  <label className="text-sm mr-2">Required</label>
+  <input
+    type="checkbox"
+    checked={!!field.required}
+    onClick={(e) => e.stopPropagation()}
+    onChange={(e) => {
+      patchField({ id: field.id, required: e.target.checked });
+    }}
+  />
+</div>
+
+
+      <FieldPreview field={field} editMode={true} patchField={patchField}  />
     </div>
   );
 }
@@ -342,15 +435,22 @@ function Inspector({ field, allNameKeys, onChange }) {
 /******************************
  * LEFT PALETTE
  ******************************/
-function FieldPalette({ onAdd }) {
+function FieldPalette({ fieldTypes, onAdd }) {
   return (
     <div className="p-3 space-y-2">
-      <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Add a field</div>
-      {FIELD_TYPES.map((ft) => (
+      <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
+        Add a field
+      </div>
+
+      {fieldTypes.length === 0 && (
+        <p className="text-gray-500 text-sm">Loading...</p>
+      )}
+
+      {fieldTypes.map((ft) => (
         <button
-          key={ft.type}
+          key={ft.name}
           className="w-full text-left px-3 py-2 border rounded-lg hover:bg-gray-50"
-          onClick={() => onAdd(ft.type)}
+          onClick={() => onAdd(ft.type, ft.name)}
         >
           {ft.label}
         </button>
@@ -358,6 +458,7 @@ function FieldPalette({ onAdd }) {
     </div>
   );
 }
+
 
 /******************************
  * PREVIEW RENDERER (public-like)
@@ -391,6 +492,8 @@ function FormPreview({ form, fields }) {
           field={f}
           value={values[f.nameKey]}
           onChange={(v) => setVal(f.nameKey, v)}
+           patchField={() => {}} // Add dummy function
+          editMode={false} // Make sure editMode is false for preview
         />
       ))}
       <button type="submit" className="px-4 py-2 rounded-md bg-indigo-600 text-white">Submit</button>
@@ -402,6 +505,7 @@ function FormPreview({ form, fields }) {
  * MAIN BUILDER
  ******************************/
 export default function FormBuilder() {
+  const [definitionFields, setDefinitionFields] = useState([]);
   const [form, setForm] = useState(defaultForm());
   const [fields, setFields] = useState(() => [
     // Starter fields (can remove)
@@ -432,21 +536,152 @@ export default function FormBuilder() {
   const nameKeys = useMemo(() => new Set(fields.map((f) => f.nameKey)), [fields]);
   const selectedField = useMemo(() => fields.find((f) => f.id === selectedId), [fields, selectedId]);
 
+    // Fetch form definitions when component loads
+  useEffect(() => {
+    const loadFormDefinitions = async () => {
+      try {
+        
+        const response = await fetchJson(`${API_BASE_URL}/getDefinations`, {
+          method: 'POST',
+          body: JSON.stringify({ menuID: `92` }),
+        });
+       // setLinkedFields(response?.data || []);
+        if(response?.data)
+        {
+           // ❌ fields you want to remove
+        const removeList = [
+          "customer_id",
+          "record_index",
+          "company_id",
+          "record_type"
+        ];
+
+        // ✅ filter out unwanted fields
+        const filtered = response.data.filter(f => !removeList.includes(f.Field));
+
+          setDefinitionFields(filtered);
+        }
+      } catch (error) {
+        console.error('Error loading form definitions:', error);
+      }
+    };
+
+    loadFormDefinitions();
+  }, []); // Run only once on mount
+
+  const fetchDropdownOptions = async (slug) => {
+  try {
+    const response = await fetchJson(`${API_BASE_URL}/categorySlugList`, {
+      method: "POST",
+      body: JSON.stringify({ status: "active", slug }),
+    });
+
+      // Option A: Stringify for readable output
+    console.log("Response of dropdown:", JSON.stringify(response, null, 2));
+
+    const list = response?.data?.[0]?.sublist || [];
+
+    return list.map(item => ({
+      label: item.categoryName,
+      value: item.category_id,
+    }));
+  } catch (err) {
+    console.error("Dropdown fetch error for slug:", slug, err);
+    return [];
+  }
+};
+
+
+// convertedFieldTypes from database 
+  const convertedFieldTypes = useMemo(() => {
+  if (!definitionFields.length) return [];
+
+  return definitionFields.map((f) => {
+    let fieldType = "short_text"; // default
+
+    // Map specific DB fields to Dropdown
+    const dropdownFields = ["lead_source", "stages", "lead_priority", "enquiry_for", "assignee"];
+
+    if (dropdownFields.includes(f.Field)) {
+      fieldType = "dropdown";
+    } else if (f.Type.startsWith("varchar")) {
+      fieldType = "short_text";
+    } else if (f.Type.startsWith("text")) {
+      fieldType = "long_text";
+    } else if (f.Type.startsWith("int")) {
+      fieldType = "number";
+    } else if (f.Type === "date") {
+      fieldType = "date";
+    } else if (f.Type.includes("enum")) {
+      fieldType = "radio";
+    }
+
+    return {
+      type: fieldType,
+      label: f.Field.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+      name: f.Field,
+    };
+  });
+
+}, [definitionFields]);
+
+
+
   // ADD FIELD
-  const handleAddField = (type) => {
-    const label = FIELD_TYPES.find((t) => t.type === type)?.label || "Field";
-    const key = generateNameKey(label, nameKeys);
-    const base = { id: uid("fld"), type, label, nameKey: key, required: false, sort: fields.length };
-    if (["radio", "checkbox", "dropdown"].includes(type)) base.options = [
-      { label: "Option 1", value: "opt_1" },
-      { label: "Option 2", value: "opt_2" },
-    ];
-    setFields((s) => [...s, base]);
-    setSelectedId(base.id);
+const handleAddField = (type, fieldName) => {
+
+  // Label from DB field
+  const label = fieldName
+    ? fieldName.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+    : FIELD_TYPES.find((t) => t.type === type)?.label || "Field";
+
+  const key = fieldName || generateNameKey(label, nameKeys);
+
+  const base = {
+    id: uid("fld"),
+    type,
+    label,
+    nameKey: key,
+    required: false,
+    sort: fields.length
   };
+
+  // For dropdown fields from database
+// If DB field is dropdown type, fetch dynamic options
+if (["dropdown"].includes(type)) {
+
+  // These fields must come from API
+  const apiFields = ["lead_source", "stages", "lead_priority", "enquiry_for", "assignee"];
+
+  if (apiFields.includes(key)) {
+    base.options = []; // this create new field in base as options
+
+    // Fetch async and update the field options
+    fetchDropdownOptions(key).then((opts) => {
+      setFields((prev) =>
+        prev.map((f) =>
+          f.id === base.id ? { ...f, options: opts } : f
+        )
+      );
+    });
+  } else {
+    // For normal dropdowns
+    base.options = [
+      { label: "Option 1", value: "opt1" },
+      { label: "Option 2", value: "opt2" }
+    ];
+  }
+}
+
+
+  setFields((s) => [...s, base]); //add this base field to the UI
+  setSelectedId(base.id);
+};
+
 
   // DUPLICATE FIELD
   const duplicateField = (id) => {
+    console.log("inside duplicate field option")
     setFields((s) => {
       const idx = s.findIndex((f) => f.id === id);
       if (idx === -1) return s;
@@ -459,6 +694,7 @@ export default function FormBuilder() {
 
   // DELETE FIELD
   const deleteField = (id) => {
+    console.log("inside dleteField option")
     setFields((s) => s.filter((f) => f.id !== id).map((x, i) => ({ ...x, sort: i })));
     if (selectedId === id) setSelectedId(null);
   };
@@ -481,6 +717,8 @@ export default function FormBuilder() {
     });
   };
 
+
+
   // EXPORT compiled render JSON (for backend save or embed preview)
   const compiled = useMemo(() => ({
     meta: { name: form.name, description: form.description, theme: form.theme },
@@ -488,6 +726,7 @@ export default function FormBuilder() {
       .slice()
       .sort((a, b) => a.sort - b.sort)
       .map((f) => ({
+        id:f.id,
         type: f.type,
         label: f.label,
         nameKey: f.nameKey,
@@ -498,6 +737,8 @@ export default function FormBuilder() {
         max: f.max,
       })),
   }), [form, fields]);
+
+
 
   const downloadJSON = () => {
     const blob = new Blob([JSON.stringify(compiled, null, 2)], { type: "application/json" });
@@ -538,7 +779,7 @@ export default function FormBuilder() {
         {/* Left Palette */}
         <aside className="col-span-3 lg:col-span-2 bg-white rounded-2xl border shadow-sm overflow-hidden">
           <div className="border-b px-3 py-2 text-sm font-medium">Fields</div>
-          <FieldPalette onAdd={handleAddField} />
+          <FieldPalette fieldTypes={convertedFieldTypes} onAdd={handleAddField} />
         </aside>
 
         {/* Center Canvas */}
@@ -563,13 +804,19 @@ export default function FormBuilder() {
                 <div className="space-y-3">
                   {fields.map((f) => (
                     <SortableItem key={f.id} id={f.id}>
-                      <FieldCard
-                        field={f}
-                        selected={selectedId === f.id}
-                        onSelect={() => setSelectedId(f.id)}
-                        onDuplicate={() => duplicateField(f.id)}
-                        onDelete={() => deleteField(f.id)}
-                      />
+                     {({ setNodeRef, style, attributes, listeners }) => (
+    <div ref={setNodeRef} style={style}>
+      <FieldCard
+        field={f}
+        selected={selectedId === f.id}
+        onSelect={() => setSelectedId(f.id)}
+        onDuplicate={() => duplicateField(f.id)}
+        onDelete={() => deleteField(f.id)}
+        patchField={patchField}
+        dragHandle={{ attributes, listeners }}
+      />
+    </div>
+  )}
                     </SortableItem>
                   ))}
                 </div>
@@ -587,7 +834,7 @@ export default function FormBuilder() {
 
         {/* Right Inspector / Preview */}
         <aside className="col-span-12 lg:col-span-3 space-y-4">
-          <div className="bg-white rounded-2xl border shadow-sm">
+          {/* <div className="bg-white rounded-2xl border shadow-sm">
             <div className="border-b px-3 py-2 text-sm font-medium flex items-center justify-between">
               <span>Properties</span>
               <Settings className="w-4 h-4" />
@@ -597,7 +844,7 @@ export default function FormBuilder() {
               allNameKeys={nameKeys}
               onChange={(patched) => patchField(patched)}
             />
-          </div>
+          </div> */}
 
           <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
             <div className="border-b px-3 py-2 text-sm font-medium flex items-center justify-between">
