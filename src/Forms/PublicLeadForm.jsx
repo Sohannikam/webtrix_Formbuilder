@@ -6,7 +6,7 @@ export default function PublicLeadForm({ config, onSuccess }) {
   const [data, setData] = useState({});
   const [errors, setErrors] = useState({});
   const themeColor = config?.theme?.color || '#1a73e8';
-  const [formFields, setFormFields] = useState([]); // Store fetched fields
+
 
   const fieldBlocks = useMemo(()=>{
     const items = [];
@@ -15,25 +15,6 @@ export default function PublicLeadForm({ config, onSuccess }) {
   }, [config]);
 
   const set = (key,val)=> setData(d=>({...d, [key]:val}));
-
-  // Fetch form definitions when component loads
-  useEffect(() => {
-    const loadFormDefinitions = async () => {
-      try {
-        
-        const response = await fetchJson(`${API_BASE_URL}/getDefinations`, {
-          method: 'POST',
-                body: JSON.stringify({ menuID: `92` }),
-        });
-       // setLinkedFields(response?.data || []);
-    
-      } catch (error) {
-        console.error('Error loading form definitions:', error);
-      }
-    };
-
-    loadFormDefinitions();
-  }, []); // Run only once on mount
 
 
   const validate = () => {
