@@ -775,62 +775,61 @@ if (["dropdown"].includes(type)) {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto grid grid-cols-12 gap-4 px-4 py-4">
-        {/* Left Palette */}
-        <aside className="col-span-3 lg:col-span-2 bg-white rounded-2xl border shadow-sm overflow-hidden">
-          <div className="border-b px-3 py-2 text-sm font-medium">Fields</div>
-          <FieldPalette fieldTypes={convertedFieldTypes} onAdd={handleAddField} />
-        </aside>
+     <div className="max-w-6xl mx-auto h-[85vh] px-4 py-4">
+  <div className="flex gap-4 items-stretch h-full">
+    
+    {/* Left Palette */}
+    <aside className="flex-[2] bg-white rounded-2xl border shadow-sm overflow-y-auto">
+      <div className="border-b px-3 py-2 text-sm font-medium">Fields</div>
+      <FieldPalette fieldTypes={convertedFieldTypes} onAdd={handleAddField} />
+    </aside>
 
-        {/* Center Canvas */}
-        <main className="col-span-9 lg:col-span-7">
-          <div className="bg-white rounded-2xl border shadow-sm p-4">
-            <div className="mb-4">
-              <input
-                className="text-2xl font-semibold w-full outline-none"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-              <textarea
-                className="w-full mt-2 text-sm text-gray-600 outline-none"
-                placeholder="Form description"
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-              />
-            </div>
+    {/* Center Canvas */}
+    <main className="flex-[7] bg-white rounded-2xl border shadow-sm p-4 overflow-y-auto">
+      <div className="mb-4">
+        <input
+          className="text-2xl font-semibold w-full outline-none"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+        />
+        <textarea
+          className="w-full mt-2 text-sm text-gray-600 outline-none"
+          placeholder="Form description"
+          value={form.description}
+          onChange={(e) => setForm({ ...form, description: e.target.value })}
+        />
+      </div>
 
-            <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-              <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
-                <div className="space-y-3">
-                  {fields.map((f) => (
-                    <SortableItem key={f.id} id={f.id}>
-                     {({ setNodeRef, style, attributes, listeners }) => (
-    <div ref={setNodeRef} style={style}>
-      <FieldCard
-        field={f}
-        selected={selectedId === f.id}
-        onSelect={() => setSelectedId(f.id)}
-        onDuplicate={() => duplicateField(f.id)}
-        onDelete={() => deleteField(f.id)}
-        patchField={patchField}
-        dragHandle={{ attributes, listeners }}
-      />
-    </div>
-  )}
-                    </SortableItem>
-                  ))}
-                </div>
-              </SortableContext>
-              <DragOverlay />
-            </DndContext>
-
-            <div className="mt-4">
+      {/* Your DND + fields */}
+      <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+        <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {fields.map((f) => (
+              <SortableItem key={f.id} id={f.id}>
+                {({ setNodeRef, style, attributes, listeners }) => (
+                  <div ref={setNodeRef} style={style}>
+                    <FieldCard
+                      field={f}
+                      selected={selectedId === f.id}
+                      onSelect={() => setSelectedId(f.id)}
+                      onDelete={() => deleteField(f.id)}
+                      patchField={patchField}
+                      dragHandle={{ attributes, listeners }}
+                    />
+                  </div>
+                )}
+              </SortableItem>
+            ))}
+          </div>
+        </SortableContext>
+        <DragOverlay />
+      </DndContext>
+                  <div className="mt-4">
               <button className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg hover:bg-gray-50" onClick={() => handleAddField("short_text")}> 
                 <Plus className="w-4 h-4"/> Add question
               </button>
             </div>
-          </div>
-        </main>
+    </main>
 
         {/* Right Inspector / Preview */}
         <aside className="col-span-12 lg:col-span-3 space-y-4">
@@ -846,17 +845,20 @@ if (["dropdown"].includes(type)) {
             />
           </div> */}
 
-          <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-            <div className="border-b px-3 py-2 text-sm font-medium flex items-center justify-between">
-              <span>Live Preview</span>
-              <Eye className="w-4 h-4" />
-            </div>
-            <div className="max-h-[70vh] overflow-auto">
-              <FormPreview form={form} fields={fields.slice().sort((a,b)=>a.sort-b.sort)} />
-            </div>
-          </div>
-        </aside>
+      <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+        <div className="border-b px-3 py-2 text-sm font-medium flex items-center justify-between">
+          <span>Live Preview</span>
+          <Eye className="w-4 h-4" />
+        </div>
+        <div className="max-h-full overflow-auto">
+          <FormPreview form={form} fields={fields.slice().sort((a, b) => a.sort - b.sort)} />
+        </div>
       </div>
+    </aside>
+
+  </div>
+</div>
+
     </div>
   );
 }
