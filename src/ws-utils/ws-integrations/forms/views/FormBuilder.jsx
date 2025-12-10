@@ -1,6 +1,9 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { API_BASE_URL } from '@config/config';
 import { fetchJson } from '@utils/fetchJson';
+import { nanoid } from "nanoid";
+
+
 import {
   DndContext,
   MouseSensor,
@@ -91,43 +94,43 @@ function FieldPreview({ field, value, onChange, editMode, patchField }) {
   //   </label>
   // );
 
-const Label = () => {
-  const [draftLabel, setDraftLabel] = useState(field.label);
+  const Label = () => {
+    const [draftLabel, setDraftLabel] = useState(field.label);
 
-  useEffect(() => {
-    setDraftLabel(field.label);
-  }, [field.label]);
+    useEffect(() => {
+      setDraftLabel(field.label);
+    }, [field.label]);
 
-  if (editMode) {
-    return (
-      <div className="mb-1">
-        <div className="flex items-center gap-1">
-          {/* Editable input  */}
+    if (editMode) {
+      return (
+        <div className="mb-1">
+          <div className="flex items-center gap-1">
+            {/* Editable input  */}
             {/* Required * (also visible in edit mode) */}
-          {field.required && <span className="text-red-500 mr-1">*</span>}
-      <input
-        className="block text-sm font-medium text-red-700 mb-1 border-b outline-none"
-        value={draftLabel}
-        onClick={(e)=> e.stopPropagation()}
-        onFocus={(e)=> e.stopPropagation()}
-        onChange={(e) => setDraftLabel(e.target.value)}
-        onBlur={() => patchField({ id: field.id, label: draftLabel })}
-      />
+            {field.required && <span className="text-red-500 mr-1">*</span>}
+            <input
+              className="block text-sm font-medium text-red-700 mb-1 border-b outline-none"
+              value={draftLabel}
+              onClick={(e) => e.stopPropagation()}
+              onFocus={(e) => e.stopPropagation()}
+              onChange={(e) => setDraftLabel(e.target.value)}
+              onBlur={() => patchField({ id: field.id, label: draftLabel })}
+            />
 
-     
-      </div>
-      </div>
+
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {field.required && <span className="text-red-500 mr-1">*</span>}
+        {field.label}
+
+      </label>
     );
-  }
-
-  return (
-    <label className="block text-sm font-medium text-gray-700 mb-1">
-      {field.required && <span className="text-red-500 mr-1">*</span>}
-      {field.label}
-      
-    </label>
-  );
-};
+  };
 
 
   if (field.type === "short_text")
@@ -232,25 +235,51 @@ const Label = () => {
     );
   }
 
- if (field.type === "dropdown") {
-  const opts = field.options || [];
+  if (field.type === "dropdown") {
+    const opts = field.options || [];
 
-  // 📌 EDIT MODE → show select but readonly
-  if (editMode) {
+    // 📌 EDIT MODE → show select but readonly
+    if (editMode) {
+      return (
+        <div className="mb-4">
+          <Label />
+
+          <select
+            className="w-full border rounded-md px-3 py-2 bg-gray-100 cursor-default"
+            value={value || ""}
+            onChange={(e) => {
+              // Prevent changing the selected value
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            // important: DO NOT USE disabled
+            readOnly // does nothing for select, but good semantics
+          >
+            <option value="" disabled>
+              {field.placeholder || "Select..."}
+            </option>
+
+            {opts.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+
+          <p className="text-xs text-gray-400 mt-1">Readonly preview</p>
+        </div>
+      );
+    }
+
+    // 📌 PREVIEW MODE → real dropdown
     return (
       <div className="mb-4">
         <Label />
 
         <select
-          className="w-full border rounded-md px-3 py-2 bg-gray-100 cursor-default"
+          className="w-full border rounded-md px-3 py-2"
           value={value || ""}
-          onChange={(e) => {
-            // Prevent changing the selected value
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          // important: DO NOT USE disabled
-          readOnly // does nothing for select, but good semantics
+          onChange={(e) => onChange?.(e.target.value)}
         >
           <option value="" disabled>
             {field.placeholder || "Select..."}
@@ -262,35 +291,9 @@ const Label = () => {
             </option>
           ))}
         </select>
-
-        <p className="text-xs text-gray-400 mt-1">Readonly preview</p>
       </div>
     );
   }
-
-  // 📌 PREVIEW MODE → real dropdown
-  return (
-    <div className="mb-4">
-      <Label />
-
-      <select
-        className="w-full border rounded-md px-3 py-2"
-        value={value || ""}
-        onChange={(e) => onChange?.(e.target.value)}
-      >
-        <option value="" disabled>
-          {field.placeholder || "Select..."}
-        </option>
-
-        {opts.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
 
 
   return (
@@ -304,9 +307,9 @@ const Label = () => {
 /******************************
  * FIELD CARD (Builder view)
  ******************************/
-function FieldCard({ field, onSelect, onDuplicate, onDelete, selected,patchField,dragHandle }) {
+function FieldCard({ field, onSelect, onDuplicate, onDelete, selected, patchField, dragHandle }) {
 
-  
+
   return (
     <div
       className={`group border rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition ${selected ? "ring-2 ring-indigo-500" : ""}`}
@@ -314,7 +317,7 @@ function FieldCard({ field, onSelect, onDuplicate, onDelete, selected,patchField
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 text-gray-500"    {...dragHandle.attributes}
-             {...dragHandle.listeners}>
+          {...dragHandle.listeners}>
           <GripVertical className="w-4 h-4 opacity-60" />
           <span className="text-xs uppercase tracking-wide">{field.type}</span>
         </div>
@@ -328,20 +331,20 @@ function FieldCard({ field, onSelect, onDuplicate, onDelete, selected,patchField
         </div>
       </div>
 
-            <div className="flex items-center justify-end mb-3">
-  <label className="text-sm mr-2">Required</label>
-  <input
-    type="checkbox"
-    checked={!!field.required}
-    onClick={(e) => e.stopPropagation()}
-    onChange={(e) => {
-      patchField({ id: field.id, required: e.target.checked });
-    }}
-  />
-</div>
+      <div className="flex items-center justify-end mb-3">
+        <label className="text-sm mr-2">Required</label>
+        <input
+          type="checkbox"
+          checked={!!field.required}
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => {
+            patchField({ id: field.id, required: e.target.checked });
+          }}
+        />
+      </div>
 
 
-      <FieldPreview field={field} editMode={true} patchField={patchField}  />
+      <FieldPreview field={field} editMode={true} patchField={patchField} />
     </div>
   );
 }
@@ -373,12 +376,12 @@ function Inspector({ field, allNameKeys, onChange }) {
       <div>
         <label className="block text-xs font-semibold text-gray-600 mb-1">Label</label>
         <input className="w-full border rounded px-3 py-2" value={field.label}
-               onChange={(e) => update({ label: e.target.value })} />
+          onChange={(e) => update({ label: e.target.value })} />
       </div>
       <div>
         <label className="block text-xs font-semibold text-gray-600 mb-1">Placeholder</label>
         <input className="w-full border rounded px-3 py-2" value={field.placeholder || ""}
-               onChange={(e) => update({ placeholder: e.target.value })} />
+          onChange={(e) => update({ placeholder: e.target.value })} />
       </div>
       <div className="flex items-center justify-between">
         <label className="text-sm">Required</label>
@@ -388,7 +391,7 @@ function Inspector({ field, allNameKeys, onChange }) {
       <div>
         <label className="block text-xs font-semibold text-gray-600 mb-1">Name Key</label>
         <input className="w-full border rounded px-3 py-2" value={field.nameKey}
-               onChange={(e) => update({ nameKey: e.target.value })} />
+          onChange={(e) => update({ nameKey: e.target.value })} />
         <p className="text-xs text-gray-500 mt-1">Stable key used for mapping (unique inside this form).</p>
       </div>
 
@@ -396,15 +399,15 @@ function Inspector({ field, allNameKeys, onChange }) {
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="block text-xs font-semibold text-gray-600">Options</label>
-            <button className="text-indigo-600 text-sm" onClick={addOption}><Plus className="inline w-4 h-4 mr-1"/>Add</button>
+            <button className="text-indigo-600 text-sm" onClick={addOption}><Plus className="inline w-4 h-4 mr-1" />Add</button>
           </div>
           <div className="space-y-2">
             {(field.options || []).map((o, idx) => (
               <div key={o.value} className="flex items-center gap-2">
                 <input className="flex-1 border rounded px-2 py-1" value={o.label}
-                       onChange={(e) => handleOptionChange(idx, { label: e.target.value })} />
+                  onChange={(e) => handleOptionChange(idx, { label: e.target.value })} />
                 <input className="w-40 border rounded px-2 py-1" value={o.value}
-                       onChange={(e) => handleOptionChange(idx, { value: e.target.value })} />
+                  onChange={(e) => handleOptionChange(idx, { value: e.target.value })} />
                 <button className="p-1 hover:bg-red-50 rounded" onClick={() => removeOption(idx)}>
                   <Trash2 className="w-4 h-4 text-red-600" />
                 </button>
@@ -419,12 +422,12 @@ function Inspector({ field, allNameKeys, onChange }) {
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">Min</label>
             <input type="number" className="w-full border rounded px-2 py-1" value={field.min ?? ""}
-                   onChange={(e) => update({ min: e.target.value === "" ? undefined : Number(e.target.value) })} />
+              onChange={(e) => update({ min: e.target.value === "" ? undefined : Number(e.target.value) })} />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">Max</label>
             <input type="number" className="w-full border rounded px-2 py-1" value={field.max ?? ""}
-                   onChange={(e) => update({ max: e.target.value === "" ? undefined : Number(e.target.value) })} />
+              onChange={(e) => update({ max: e.target.value === "" ? undefined : Number(e.target.value) })} />
           </div>
         </div>
       )}
@@ -492,7 +495,7 @@ function FormPreview({ form, fields }) {
           field={f}
           value={values[f.nameKey]}
           onChange={(v) => setVal(f.nameKey, v)}
-           patchField={() => {}} // Add dummy function
+          patchField={() => { }} // Add dummy function
           editMode={false} // Make sure editMode is false for preview
         />
       ))}
@@ -505,6 +508,10 @@ function FormPreview({ form, fields }) {
  * MAIN BUILDER
  ******************************/
 export default function FormBuilder() {
+
+
+
+  const [formId, setFormId] = useState(nanoid());
   const [definitionFields, setDefinitionFields] = useState([]);
   const [form, setForm] = useState(defaultForm());
   const [fields, setFields] = useState(() => [
@@ -528,6 +535,7 @@ export default function FormBuilder() {
       sort: 1,
     },
   ]);
+
   const [selectedId, setSelectedId] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -536,28 +544,39 @@ export default function FormBuilder() {
   const nameKeys = useMemo(() => new Set(fields.map((f) => f.nameKey)), [fields]);
   const selectedField = useMemo(() => fields.find((f) => f.id === selectedId), [fields, selectedId]);
 
-    // Fetch form definitions when component loads
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "/embed.js"; // Your script path
+    script.async = true;
+    script.setAttribute("data-form-id", "12345");
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  // Fetch form definitions when component loads
   useEffect(() => {
     const loadFormDefinitions = async () => {
       try {
-        
+
         const response = await fetchJson(`${API_BASE_URL}/getDefinations`, {
           method: 'POST',
           body: JSON.stringify({ menuID: `92` }),
         });
-       // setLinkedFields(response?.data || []);
-        if(response?.data)
-        {
-           // ❌ fields you want to remove
-        const removeList = [
-          "customer_id",
-          "record_index",
-          "company_id",
-          "record_type"
-        ];
+        // setLinkedFields(response?.data || []);
+        if (response?.data) {
+          // ❌ fields you want to remove
+          const removeList = [
+            "customer_id",
+            "record_index",
+            "company_id",
+            "record_type"
+          ];
 
-        // ✅ filter out unwanted fields
-        const filtered = response.data.filter(f => !removeList.includes(f.Field));
+          // ✅ filter out unwanted fields
+          const filtered = response.data.filter(f => !removeList.includes(f.Field));
 
           setDefinitionFields(filtered);
         }
@@ -570,113 +589,113 @@ export default function FormBuilder() {
   }, []); // Run only once on mount
 
   const fetchDropdownOptions = async (slug) => {
-  try {
-    const response = await fetchJson(`${API_BASE_URL}/categorySlugList`, {
-      method: "POST",
-      body: JSON.stringify({ status: "active", slug }),
-    });
+    try {
+      const response = await fetchJson(`${API_BASE_URL}/categorySlugList`, {
+        method: "POST",
+        body: JSON.stringify({ status: "active", slug }),
+      });
 
       // Option A: Stringify for readable output
-    console.log("Response of dropdown:", JSON.stringify(response, null, 2));
+      console.log("Response of dropdown:", JSON.stringify(response, null, 2));
 
-    const list = response?.data?.[0]?.sublist || [];
+      const list = response?.data?.[0]?.sublist || [];
 
-    return list.map(item => ({
-      label: item.categoryName,
-      value: item.category_id,
-    }));
-  } catch (err) {
-    console.error("Dropdown fetch error for slug:", slug, err);
-    return [];
-  }
-};
-
-
-// convertedFieldTypes from database 
-  const convertedFieldTypes = useMemo(() => {
-  if (!definitionFields.length) return [];
-
-  return definitionFields.map((f) => {
-    let fieldType = "short_text"; // default
-
-    // Map specific DB fields to Dropdown
-    const dropdownFields = ["lead_source", "stages", "lead_priority", "enquiry_for", "assignee"];
-
-    if (dropdownFields.includes(f.Field)) {
-      fieldType = "dropdown";
-    } else if (f.Type.startsWith("varchar")) {
-      fieldType = "short_text";
-    } else if (f.Type.startsWith("text")) {
-      fieldType = "long_text";
-    } else if (f.Type.startsWith("int")) {
-      fieldType = "number";
-    } else if (f.Type === "date") {
-      fieldType = "date";
-    } else if (f.Type.includes("enum")) {
-      fieldType = "radio";
+      return list.map(item => ({
+        label: item.categoryName,
+        value: item.category_id,
+      }));
+    } catch (err) {
+      console.error("Dropdown fetch error for slug:", slug, err);
+      return [];
     }
+  };
 
-    return {
-      type: fieldType,
-      label: f.Field.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-      name: f.Field,
-    };
-  });
 
-}, [definitionFields]);
+  // convertedFieldTypes from database 
+  const convertedFieldTypes = useMemo(() => {
+    if (!definitionFields.length) return [];
+
+    return definitionFields.map((f) => {
+      let fieldType = "short_text"; // default
+
+      // Map specific DB fields to Dropdown
+      const dropdownFields = ["lead_source", "stages", "lead_priority", "enquiry_for", "assignee"];
+
+      if (dropdownFields.includes(f.Field)) {
+        fieldType = "dropdown";
+      } else if (f.Type.startsWith("varchar")) {
+        fieldType = "short_text";
+      } else if (f.Type.startsWith("text")) {
+        fieldType = "long_text";
+      } else if (f.Type.startsWith("int")) {
+        fieldType = "number";
+      } else if (f.Type === "date") {
+        fieldType = "date";
+      } else if (f.Type.includes("enum")) {
+        fieldType = "radio";
+      }
+
+      return {
+        type: fieldType,
+        label: f.Field.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        name: f.Field,
+      };
+    });
+
+  }, [definitionFields]);
 
 
 
   // ADD FIELD
-const handleAddField = (type, fieldName) => {
+  const handleAddField = (type, fieldName) => {
 
-  // Label from DB field
-  const label = fieldName
-    ? fieldName.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-    : FIELD_TYPES.find((t) => t.type === type)?.label || "Field";
+    // Label from DB field
+    const label = fieldName
+      ? fieldName.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+      : FIELD_TYPES.find((t) => t.type === type)?.label || "Field";
 
-  const key = fieldName || generateNameKey(label, nameKeys);
+    const key = fieldName || generateNameKey(label, nameKeys);
 
-  const base = {
-    id: uid("fld"),
-    type,
-    label,
-    nameKey: key,
-    required: false,
-    sort: fields.length
+    const base = {
+      id: uid("fld"),
+      type,
+      label,
+      nameKey: key,
+      required: false,
+      sort: fields.length
+    };
+
+    // For dropdown fields from database
+    // If DB field is dropdown type, fetch dynamic options
+    if (["dropdown"].includes(type)) {
+
+      // These fields must come from API
+      const apiFields = ["lead_source", "stages", "lead_priority", "enquiry_for", "assignee"];
+
+      if (apiFields.includes(key)) {
+        base.options = []; // this create new field in base as options
+
+        // Fetch async and update the field options
+        fetchDropdownOptions(key).then((opts) => {
+          setFields((prev) =>
+            prev.map((f) =>
+              f.id === base.id ? { ...f, options: opts } : f
+            )
+          );
+        });
+      } else {
+        // For normal dropdowns
+        base.options = [
+          { label: "Option 1", value: "opt1" },
+          { label: "Option 2", value: "opt2" }
+        ];
+      }
+    }
+
+
+    setFields((s) => [...s, base]); //add this base field to the UI
+    setSelectedId(base.id);
   };
-
-  // For dropdown fields from database
-// If DB field is dropdown type, fetch dynamic options
-if (["dropdown"].includes(type)) {
-
-  // These fields must come from API
-  const apiFields = ["lead_source", "stages", "lead_priority", "enquiry_for", "assignee"];
-
-  if (apiFields.includes(key)) {
-    base.options = []; // this create new field in base as options
-
-    // Fetch async and update the field options
-    fetchDropdownOptions(key).then((opts) => {
-      setFields((prev) =>
-        prev.map((f) =>
-          f.id === base.id ? { ...f, options: opts } : f
-        )
-      );
-    });
-  } else {
-    // For normal dropdowns
-    base.options = [
-      { label: "Option 1", value: "opt1" },
-      { label: "Option 2", value: "opt2" }
-    ];
-  }
-}
-
-
-  setFields((s) => [...s, base]); //add this base field to the UI
-  setSelectedId(base.id);
-};
 
 
   // DUPLICATE FIELD
@@ -726,7 +745,7 @@ if (["dropdown"].includes(type)) {
       .slice()
       .sort((a, b) => a.sort - b.sort)
       .map((f) => ({
-        id:f.id,
+        id: f.id,
         type: f.type,
         label: f.label,
         nameKey: f.nameKey,
@@ -750,6 +769,33 @@ if (["dropdown"].includes(type)) {
     URL.revokeObjectURL(url);
   };
 
+ 
+    const jsonString = JSON.stringify(compiled, null, 2);
+    localStorage.setItem("json", jsonString)
+
+
+
+  const saveFormDefinition = async () => {
+    try {
+      const payload = {
+        formId,          // or dynamic
+        definition: compiled // 👈 THIS is your full JSON form definition
+      };
+
+      const response = await fetchJson(`${API_BASE_URL}/saveDefinition`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      alert("Form saved successfully!");
+      console.log("Saved:", response);
+
+    } catch (err) {
+      console.error("Save error:", err);
+      alert("Error saving form.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -770,70 +816,75 @@ if (["dropdown"].includes(type)) {
             <button className="px-3 py-2 rounded hover:bg-gray-100 flex items-center gap-2" onClick={downloadJSON}>
               <Download className="w-4 h-4" /> Export JSON
             </button>
-            <button className="px-3 py-2 rounded bg-indigo-600 text-white">Save</button>
+            <button
+              className="px-3 py-2 rounded bg-indigo-600 text-white"
+              onClick={saveFormDefinition}
+            >
+              Save
+            </button>
           </div>
         </div>
       </div>
 
-     <div className="max-w-6xl mx-auto h-[85vh] px-4 py-4">
-  <div className="flex gap-4 items-stretch h-full">
-    
-    {/* Left Palette */}
-    <aside className="flex-[2] bg-white rounded-2xl border shadow-sm overflow-y-auto">
-      <div className="border-b px-3 py-2 text-sm font-medium">Fields</div>
-      <FieldPalette fieldTypes={convertedFieldTypes} onAdd={handleAddField} />
-    </aside>
+      <div className="max-w-6xl mx-auto h-[85vh] px-4 py-4">
+        <div className="flex gap-4 items-stretch h-full">
 
-    {/* Center Canvas */}
-    <main className="flex-[7] bg-white rounded-2xl border shadow-sm p-4 overflow-y-auto">
-      <div className="mb-4">
-        <input
-          className="text-2xl font-semibold w-full outline-none"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-        />
-        <textarea
-          className="w-full mt-2 text-sm text-gray-600 outline-none"
-          placeholder="Form description"
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-        />
-      </div>
+          {/* Left Palette */}
+          <aside className="flex-[2] bg-white rounded-2xl border shadow-sm overflow-y-auto">
+            <div className="border-b px-3 py-2 text-sm font-medium">Fields</div>
+            <FieldPalette fieldTypes={convertedFieldTypes} onAdd={handleAddField} />
+          </aside>
 
-      {/* Your DND + fields */}
-      <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-        <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-3">
-            {fields.map((f) => (
-              <SortableItem key={f.id} id={f.id}>
-                {({ setNodeRef, style, attributes, listeners }) => (
-                  <div ref={setNodeRef} style={style}>
-                    <FieldCard
-                      field={f}
-                      selected={selectedId === f.id}
-                      onSelect={() => setSelectedId(f.id)}
-                      onDelete={() => deleteField(f.id)}
-                      patchField={patchField}
-                      dragHandle={{ attributes, listeners }}
-                    />
-                  </div>
-                )}
-              </SortableItem>
-            ))}
-          </div>
-        </SortableContext>
-        <DragOverlay />
-      </DndContext>
-                  <div className="mt-4">
-              <button className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg hover:bg-gray-50" onClick={() => handleAddField("short_text")}> 
-                <Plus className="w-4 h-4"/> Add question
+          {/* Center Canvas */}
+          <main className="flex-[7] bg-white rounded-2xl border shadow-sm p-4 overflow-y-auto">
+            <div className="mb-4">
+              <input
+                className="text-2xl font-semibold w-full outline-none"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+              />
+              <textarea
+                className="w-full mt-2 text-sm text-gray-600 outline-none"
+                placeholder="Form description"
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+              />
+            </div>
+
+            {/* Your DND + fields */}
+            <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+              <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-3">
+                  {fields.map((f) => (
+                    <SortableItem key={f.id} id={f.id}>
+                      {({ setNodeRef, style, attributes, listeners }) => (
+                        <div ref={setNodeRef} style={style}>
+                          <FieldCard
+                            field={f}
+                            selected={selectedId === f.id}
+                            onSelect={() => setSelectedId(f.id)}
+                            onDelete={() => deleteField(f.id)}
+                            patchField={patchField}
+                            dragHandle={{ attributes, listeners }}
+                          />
+                        </div>
+                      )}
+                    </SortableItem>
+                  ))}
+                </div>
+              </SortableContext>
+              <DragOverlay />
+            </DndContext>
+            <div className="mt-4">
+              <button className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg hover:bg-gray-50" onClick={() => handleAddField("short_text")}>
+                <Plus className="w-4 h-4" /> Add question
               </button>
             </div>
-    </main>
+          </main>
 
-        {/* Right Inspector / Preview */}
-        <aside className="col-span-12 lg:col-span-3 space-y-4">
-          {/* <div className="bg-white rounded-2xl border shadow-sm">
+          {/* Right Inspector / Preview */}
+          <aside className="col-span-12 lg:col-span-3 space-y-4">
+            {/* <div className="bg-white rounded-2xl border shadow-sm">
             <div className="border-b px-3 py-2 text-sm font-medium flex items-center justify-between">
               <span>Properties</span>
               <Settings className="w-4 h-4" />
@@ -845,19 +896,22 @@ if (["dropdown"].includes(type)) {
             />
           </div> */}
 
-      <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-        <div className="border-b px-3 py-2 text-sm font-medium flex items-center justify-between">
-          <span>Live Preview</span>
-          <Eye className="w-4 h-4" />
-        </div>
-        <div className="max-h-full overflow-auto">
-          <FormPreview form={form} fields={fields.slice().sort((a, b) => a.sort - b.sort)} />
+            <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+              <div className="border-b px-3 py-2 text-sm font-medium flex items-center justify-between">
+                <span>Live Preview</span>
+                <Eye className="w-4 h-4" />
+              </div>
+              <div className="max-h-full overflow-auto">
+                <FormPreview form={form} fields={fields.slice().sort((a, b) => a.sort - b.sort)} />
+             
+              </div>
+            
+             
+            </div>
+          </aside>
+
         </div>
       </div>
-    </aside>
-
-  </div>
-</div>
 
     </div>
   );
