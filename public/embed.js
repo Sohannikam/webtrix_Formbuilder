@@ -9,7 +9,7 @@
   "use strict";
 
   // ===================== CONFIG: CHANGE THIS TO YOUR BASE URL ==========================
-  var BASE_URL = "http://localhost:5000"; // TODO: update
+  var BASE_URL = "https://webtrix-backend.onrender.com"; // TODO: update
   var FORM_API_URL = BASE_URL + "/api/webform";
   var SUBMIT_API_URL = BASE_URL + "/api/webform/submit";
 
