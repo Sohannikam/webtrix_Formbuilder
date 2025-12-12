@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { API_BASE_URL } from '@config/config';
 import { fetchJson } from '@utils/fetchJson';
 
