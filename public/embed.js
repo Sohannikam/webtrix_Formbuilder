@@ -8,9 +8,9 @@
 (function () {
   "use strict";
 
-  // === CONFIG: CHANGE THIS TO YOUR BASE URL ==========================
+  // ===================== CONFIG: CHANGE THIS TO YOUR BASE URL ==========================
   var BASE_URL = "http://localhost:5000"; // TODO: update
-  var FORM_API_URL = BASE_URL + "/api/webform/getForm";
+  var FORM_API_URL = BASE_URL + "/api/webform";
   var SUBMIT_API_URL = BASE_URL + "/api/webform/submit";
 
   // ===================================================================
@@ -239,6 +239,11 @@
   // ===================================================================
 
   function renderForm(config, scriptEl) {
+
+    console.log("FINAL CONFIG: ", config);
+    console.log("FIELDS: ", config.fields);
+
+
     var formId = config.form_id || scriptEl.getAttribute("data-form-id");
     var containerId = "w24_form_container_" + formId;
     var formDomId = "w24_form_" + formId;
@@ -288,7 +293,7 @@
       },
     });
 
-    var title = config.title;
+    var title = config.meta.name;
     if (title) {
       var h3 = createElement("h3", {
         class: "w24-form-title",
@@ -302,7 +307,7 @@
       wrapper.appendChild(h3);
     }
 
-    var description = config.description;
+    var description = config.meta.description;
     if (description) {
       var p = createElement("p", {
         class: "w24-form-description",
@@ -339,8 +344,8 @@
     var visibilityRules = [];
 
     // --- Render fields from config ---
-    (config.fields || []).forEach(function (field) 
-    {
+    (config.fields || []).forEach(function (field) {
+      console.log("inside config.fields",field)
       if (field.hidden) {
         // still include as hidden input
         var hiddenInput = createElement("input", {
@@ -414,7 +419,7 @@
           inputEl.value = field.value || "";
           break;
 
-        case "select":
+        case "dropdown":
           inputEl = createElement("select", {
             name: field.name,
             id: formDomId + "_" + field.name,
@@ -429,7 +434,7 @@
           }
           (field.options || []).forEach(function (opt) {
             var optionEl = createElement("option", {
-              value: opt.value,
+              value: opt.label,
               text: opt.label,
             });
             if (field.value && field.value == opt.value) {
@@ -571,6 +576,8 @@
     buttonWrapper.appendChild(submitBtn);
     formEl.appendChild(buttonWrapper);
 
+   
+
     // Attach form to wrapper
     wrapper.appendChild(formEl);
     container.appendChild(wrapper);
@@ -667,8 +674,9 @@
             }
             return res.json();
           })
-          
+
           .then(function (data) {
+            console.log("form submited in embed.js")
             var isSuccess =
               data.success === true ||
               data.status === "success" ||
@@ -729,8 +737,7 @@
   // document.currentScript is unique to each script tag
   // ===================================================================
 
-  function init() 
-  {
+  function init() {
     var scriptEl = document.currentScript;
     if (!scriptEl) return;
 
@@ -745,7 +752,13 @@
       return;
     }
 
-    var url = FORM_API_URL + "?form_id=" + encodeURIComponent(formId);
+    var existingContainer = document.getElementById("w24_form_container_" + formId);
+  if (existingContainer) {
+    console.warn("Form already rendered, skipping duplicate render.");
+    return;
+  }
+
+    var url = FORM_API_URL + "/form/" + encodeURIComponent(formId);
 
     // Optional: allow passing API key or tenant from data attributes
     var companyId = scriptEl.getAttribute("data-company-id");
@@ -757,16 +770,20 @@
       method: "GET",
       credentials: "include",
     })
-    .then(function (res) {
+      .then(function (res) {
         if (!res.ok) {
           throw new Error("Failed to load form config, status " + res.status);
         }
         return res.json();
       })
- .then(function (config) {
+      .then(function (config) {
+
+
         if (!config || typeof config !== "object") {
           throw new Error("Invalid form config received");
         }
+
+       console.log("config value is"+JSON.stringify(config, null, 2));
         renderForm(config, scriptEl);
       })
 
