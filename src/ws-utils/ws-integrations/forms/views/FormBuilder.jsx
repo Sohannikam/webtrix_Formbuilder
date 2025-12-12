@@ -2,6 +2,7 @@ import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { API_BASE_URL } from '@config/config';
 import { fetchJson } from '@utils/fetchJson';
 import { nanoid } from "nanoid";
+import {LOCAL_FORM_API} from '@config/config';
 
 
 import {
@@ -544,18 +545,6 @@ export default function FormBuilder() {
   const nameKeys = useMemo(() => new Set(fields.map((f) => f.nameKey)), [fields]);
   const selectedField = useMemo(() => fields.find((f) => f.id === selectedId), [fields, selectedId]);
 
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "/embed.js"; // Your script path
-    script.async = true;
-    script.setAttribute("data-form-id", "12345");
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
-
   // Fetch form definitions when component loads
   useEffect(() => {
     const loadFormDefinitions = async () => {
@@ -619,7 +608,7 @@ export default function FormBuilder() {
       let fieldType = "short_text"; // default
 
       // Map specific DB fields to Dropdown
-      const dropdownFields = ["lead_source", "stages", "lead_priority", "enquiry_for", "assignee"];
+      const dropdownFields = ["lead_source", "lead_stages", "lead_priority", "enquiry_for", "assignee"];
 
       if (dropdownFields.includes(f.Field)) {
         fieldType = "dropdown";
@@ -670,7 +659,7 @@ export default function FormBuilder() {
     if (["dropdown"].includes(type)) {
 
       // These fields must come from API
-      const apiFields = ["lead_source", "stages", "lead_priority", "enquiry_for", "assignee"];
+      const apiFields = ["lead_source", "lead_stages", "lead_priority", "enquiry_for", "assignee"];
 
       if (apiFields.includes(key)) {
         base.options = []; // this create new field in base as options
@@ -778,11 +767,13 @@ export default function FormBuilder() {
   const saveFormDefinition = async () => {
     try {
       const payload = {
-        formId,          // or dynamic
-        definition: compiled // 👈 THIS is your full JSON form definition
-      };
+  formId: "ZD4dRJq6X4Ccif02qghpP",  
+  definition: compiled 
+};
 
-      const response = await fetchJson(`${API_BASE_URL}/saveDefinition`, {
+    setFormId(payload.formId);  // persist it in state
+
+      const response = await fetchJson(`${LOCAL_FORM_API}/saveDefinition`, {
         method: "POST",
         body: JSON.stringify(payload),
       });
