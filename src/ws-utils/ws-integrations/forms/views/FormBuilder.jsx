@@ -88,6 +88,7 @@ function SortableItem({ id, children, className }) {
  * FIELD RENDERERS (Builder + Preview)
  ******************************/
 function FieldPreview({ field, value, onChange, editMode, patchField }) {
+
   const required = field.required ? "*" : "";
   // const common = (
   //   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -440,6 +441,7 @@ function Inspector({ field, allNameKeys, onChange }) {
  * LEFT PALETTE
  ******************************/
 function FieldPalette({ fieldTypes, onAdd }) {
+ 
   return (
     <div className="p-3 space-y-2">
       <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
@@ -608,7 +610,7 @@ export default function FormBuilder() {
       let fieldType = "short_text"; // default
 
       // Map specific DB fields to Dropdown
-      const dropdownFields = ["lead_source", "lead_stages", "lead_priority", "enquiry_for", "assignee"];
+      const dropdownFields = ["lead_source", "stages", "lead_priority", "enquiry_for", "assignee"];
 
       if (dropdownFields.includes(f.Field)) {
         fieldType = "dropdown";
@@ -621,8 +623,23 @@ export default function FormBuilder() {
       } else if (f.Type === "date") {
         fieldType = "date";
       } else if (f.Type.includes("enum")) {
-        fieldType = "radio";
-      }
+        
+      fieldType = "radio";
+
+      const enumValues = f.Type
+        .match(/'([^']+)'/g)
+        ?.map(v => v.replace(/'/g, ""));
+
+      return {
+        type: "radio",
+        label: f.Field.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+        name: f.Field,
+        options: enumValues?.map(v => ({
+          label: v.charAt(0).toUpperCase() + v.slice(1),
+          value: v
+        })) || []
+      };
+    }
 
       return {
         type: fieldType,
@@ -643,7 +660,13 @@ export default function FormBuilder() {
       ? fieldName.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
       : FIELD_TYPES.find((t) => t.type === type)?.label || "Field";
 
-    const key = fieldName || generateNameKey(label, nameKeys);
+        let rawKey = fieldName || generateNameKey(label, nameKeys);
+
+          if (rawKey === "stages") {
+    rawKey = "lead_stages";
+  }
+
+const key = rawKey;
 
     const base = {
       id: uid("fld"),
@@ -654,7 +677,11 @@ export default function FormBuilder() {
       sort: fields.length
     };
 
-    // For dropdown fields from database
+  const matched = convertedFieldTypes.find((t) => t.name === key);
+  if (matched && matched.type === "radio") {
+    base.options = matched.options;
+  }
+
     // If DB field is dropdown type, fetch dynamic options
     if (["dropdown"].includes(type)) {
 
