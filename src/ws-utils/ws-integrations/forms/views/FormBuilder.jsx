@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { API_BASE_URL } from '@config/config';
 import { fetchJson } from '@utils/fetchJson';
 import { nanoid } from "nanoid";

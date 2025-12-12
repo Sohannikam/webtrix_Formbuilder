@@ -1,9 +1,7 @@
 import React, { useEffect } from 'react'
 import './App.css'
 import LeadFormDesigner from './Forms/LeadFormDesigner'
-import LeadFormDesigner_ from './Forms/LeadFormDesigner_'
-import PublicLeadForm from './Forms/PublicLeadForm'
-import CreateLead from './Forms/CreateLead'
+
 import Cookies from "js-cookie";
 
 const App = () => {
