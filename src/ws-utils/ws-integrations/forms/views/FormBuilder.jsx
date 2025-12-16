@@ -510,9 +510,29 @@ function FormPreview({ form, fields }) {
 /******************************
  * MAIN BUILDER
  ******************************/
+
+
 export default function FormBuilder() {
 
+  useEffect(() => {
+  const savedFormId = localStorage.getItem("formId");
+  if (savedFormId) {
+    console.log("inside svedFromid")
+    setFormId(savedFormId);
+    console.log("formid inside useEffect of FromBuilder is"+formId)
+  }
+}, []);
 
+
+const [showSettings, setShowSettings] = useState(false);
+
+  const [formSettings, setFormSettings] = useState({
+  display_mode: "inline",
+  delay_ms: 0,
+   popup_trigger: "delay",
+  slide_position: "bottom-right" ,
+  scroll_percent: 50
+});
 
   const [formId, setFormId] = useState(nanoid());
   const [definitionFields, setDefinitionFields] = useState([]);
@@ -651,6 +671,22 @@ export default function FormBuilder() {
   }, [definitionFields]);
 
 
+  const saveFormSettings = async (newSettings) => {
+  try {
+    console.log("form id inside of saveFormSetting api is"+formId)
+    await fetch(
+      `${LOCAL_FORM_API}/${formId}/settings`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ settings: newSettings }),
+      }
+    );
+  } catch (err) {
+    console.error("Failed to save form settings", err);
+  }
+};
+
 
   // ADD FIELD
   const handleAddField = (type, fieldName) => {
@@ -665,6 +701,11 @@ export default function FormBuilder() {
           if (rawKey === "stages") {
     rawKey = "lead_stages";
   }
+
+        if (rawKey === "enquiry_for") {
+    rawKey = "enquiry_list";
+  }
+  
 
 const key = rawKey;
 
@@ -686,7 +727,7 @@ const key = rawKey;
     if (["dropdown"].includes(type)) {
 
       // These fields must come from API
-      const apiFields = ["lead_source", "lead_stages", "lead_priority", "enquiry_for", "assignee"];
+      const apiFields = ["lead_source", "lead_stages", "lead_priority", "enquiry_list", "assignee"];
 
       if (apiFields.includes(key)) {
         base.options = []; // this create new field in base as options
@@ -757,6 +798,7 @@ const key = rawKey;
   // EXPORT compiled render JSON (for backend save or embed preview)
   const compiled = useMemo(() => ({
     meta: { name: form.name, description: form.description, theme: form.theme },
+     settings: formSettings,
     fields: fields
       .slice()
       .sort((a, b) => a.sort - b.sort)
@@ -799,6 +841,8 @@ const key = rawKey;
 };
 
     setFormId(payload.formId);  // persist it in state
+    localStorage.setItem("formId", payload.formId);
+
 
       const response = await fetchJson(`${LOCAL_FORM_API}/saveDefinition`, {
         method: "POST",
@@ -813,6 +857,56 @@ const key = rawKey;
       alert("Error saving form.");
     }
   };
+
+ const updateSettingsSilent = (patch) => {
+  const updated = { ...formSettings, ...patch };
+  setFormSettings(updated);
+  saveFormSettings(updated); // no alert
+};
+
+const updateSettingsWithAlert = (patch) => {
+  const updated = { ...formSettings, ...patch };
+  setFormSettings(updated);
+  saveFormSettings(updated);
+
+  alert("Settings updated successfully");
+};
+
+const handlePopupTriggerChange = (newTrigger) => {
+  if (newTrigger === "delay") {
+    updateSettingsSilent({
+      popup_trigger: "delay",
+      // scroll_percent: null,
+    });
+  }
+
+  if (newTrigger === "scroll") {
+    updateSettingsSilent({
+      popup_trigger: "scroll",
+      delay_sec: null,
+      delay_ms: 0,
+    });
+  }
+};
+
+
+const handleDisplayModeChange = (mode) => {
+  // Base update
+  const update = {
+    display_mode: mode,
+  };
+
+  // If leaving popup mode, reset popup-specific fields
+  if (mode !== "popup") {
+    update.popup_trigger = null;
+    update.delay_ms = 0;
+    // update.scroll_percent = null;
+  }
+
+  updateSettingsWithAlert(update);
+};
+
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -840,6 +934,15 @@ const key = rawKey;
             >
               Save
             </button>
+
+            <button
+  className="px-3 py-2 rounded hover:bg-gray-100 flex items-center gap-2"
+  onClick={() => setShowSettings(true)}
+>
+  <Settings className="w-4 h-4" />
+  Form Settings
+</button>
+
           </div>
         </div>
       </div>
@@ -930,6 +1033,177 @@ const key = rawKey;
 
         </div>
       </div>
+
+{/* Form setting modal  */}
+
+
+{showSettings && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="bg-white w-[420px] rounded-xl shadow-lg p-5 relative">
+      
+         {/* Close */}
+     <button
+  className="group absolute top-3 right-3 text-black hover:text-black"
+  onClick={() => setShowSettings(false)}
+  aria-label="Close"
+>
+  ✕
+
+  {/* Tooltip */}
+  <span
+    className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 
+               bg-black text-white text-xs px-2 py-1 rounded
+               opacity-0 group-hover:opacity-100 transition-opacity"
+  >
+    Close
+  </span>
+</button>
+
+
+      <h3 className="text-lg font-semibold mb-4">Form Settings</h3>
+
+      {/* Display Mode */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-2">
+          Display Mode
+        </label>
+
+        <div className="space-y-2">
+          <label className="flex items-center gap-2">
+            <input
+              type="radio"
+              checked={formSettings.display_mode === "inline"}
+            onChange={() => handleDisplayModeChange("inline")}
+            />
+            Inline (Embed in page)
+          </label>
+
+          <label className="flex items-center gap-2">
+          <input
+  type="radio"
+  checked={formSettings.display_mode === "popup"}
+  onChange={() => handleDisplayModeChange("popup")}
+/>
+
+            Popup
+          </label>
+
+          {/* Slide-in placeholder */}
+          <label className="flex items-center gap-2">
+            <input type="radio" 
+            checked={formSettings.display_mode === "slide_in"}
+            onChange={() => handleDisplayModeChange("slide_in")} />
+            Slide-in
+          </label>
+        </div>
+      </div>
+
+      {/* Popup Delay */}
+  {formSettings.display_mode === "popup" && (
+  <div className="mb-4">
+    <label className="block text-sm font-medium mb-2">
+      Popup Trigger
+    </label>
+
+    <div className="space-y-2">
+      <label className="flex items-center gap-2">
+      <input
+  type="radio"
+  checked={formSettings.popup_trigger === "delay"}
+  onChange={() => handlePopupTriggerChange("delay")}
+/>
+        After delay
+      </label>
+
+      <label className="flex items-center gap-2">
+  <input
+  type="radio"
+  checked={formSettings.popup_trigger === "scroll"}
+  onChange={() => handlePopupTriggerChange("scroll")}
+/>
+
+        On scroll
+      </label>
+    </div>
+  </div>
+)}
+
+
+{formSettings.display_mode === "popup" &&
+  formSettings.popup_trigger === "delay" && (
+    <div className="mb-4">
+      <label className="block text-sm font-medium mb-1">
+        Popup Delay (seconds)
+      </label>
+
+      <input
+        type="number"
+        min="0"
+        placeholder="Enter delay"
+        className="w-full border rounded px-3 py-2"
+        value={formSettings.delay_sec ?? ""}
+        onChange={(e) => {
+          const value = e.target.value;
+          updateSettingsSilent({
+            delay_sec: value,
+            delay_ms: value === "" ? 0 : Number(value) * 1000,
+          });
+        }}
+      />
+    </div>
+)}
+
+
+{formSettings.display_mode === "popup" &&
+  formSettings.popup_trigger === "scroll" && (
+    <div>
+      <label className="block text-sm font-medium mb-1">
+        Show popup after scroll
+      </label>
+
+      <select
+        className="w-full border rounded px-3 py-2"
+        value={formSettings.scroll_percent}
+        onChange={(e) =>
+          updateSettingsWithAlert({
+            scroll_percent: Number(e.target.value),
+          })
+        }
+      >
+        <option value={50}>50% page scroll</option>
+        <option value={75}>75% page scroll</option>
+      </select>
+    </div>
+)}
+
+{/* Slide-in Position */}
+{formSettings.display_mode === "slide_in" && (
+  <div className="mb-4">
+    <label className="block text-sm font-medium mb-1">
+      Slide-in Position
+    </label>
+
+    <select
+      className="w-full border rounded px-3 py-2"
+      value={formSettings.slide_position || "bottom-right"}
+      onChange={(e) =>
+        updateSettingsWithAlert({
+          slide_position: e.target.value,
+        })
+      }
+    >
+      <option value="bottom-right">Bottom Right</option>
+      <option value="bottom-left">Bottom Left</option>
+      <option value="top-right">Top Right</option>
+      <option value="top-left">Top Left</option>
+    </select>
+  </div>
+)}
+
+
+    </div>
+  </div>
+)}
 
     </div>
   );
