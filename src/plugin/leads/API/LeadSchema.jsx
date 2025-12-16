@@ -66,6 +66,7 @@ export const columnLabels = {
   follow_up_date:"Followup Date",
   enquiry_for:"Service Looking For"
  };
+ 
 export  const fieldOverrides = {
             lead_source: {
               type: 'smartSelectInput',
