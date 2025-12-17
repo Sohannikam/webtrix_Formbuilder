@@ -869,7 +869,6 @@ const updateSettingsWithAlert = (patch) => {
   setFormSettings(updated);
   saveFormSettings(updated);
 
-  alert("Settings updated successfully");
 };
 
 const handlePopupTriggerChange = (newTrigger) => {
