@@ -247,9 +247,6 @@ var popupTrigger = safeGet(config, "settings.popup_trigger", "delay");
 var scrollPercent = safeGet(config, "settings.scroll_percent", 50);
 
 
-    console.log("FINAL CONFIG: ", config);
-    console.log("FIELDS: ", config.fields);
-
     function renderInline(container, wrapper, scriptEl) {
   scriptEl.parentNode.insertBefore(container, scriptEl.nextSibling);
   container.appendChild(wrapper);
@@ -560,7 +557,7 @@ function setupPopupTriggers(wrapper) {
 
     // --- Render fields from config ---
     (config.fields || []).forEach(function (field) {
-      console.log("inside config.fields",field)
+  
       if (field.hidden) {
         // still include as hidden input
         var hiddenInput = createElement("input", {
@@ -1011,7 +1008,7 @@ function setupPopupTriggers(wrapper) {
           throw new Error("Invalid form config received");
         }
 
-       console.log("config value is"+JSON.stringify(config, null, 2));
+    
         renderForm(config, scriptEl);
       })
 
