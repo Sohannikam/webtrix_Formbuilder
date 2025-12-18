@@ -473,8 +473,6 @@ function FormPreview({ form, fields , formStyle  }) {
 
   const [values, setValues] = useState({});
 
-
-
   const setVal = (k, v) => setValues((s) => ({ ...s, [k]: v }));
 
   const handleSubmit = (e) => {
@@ -505,7 +503,10 @@ function FormPreview({ form, fields , formStyle  }) {
 </h3>
 
       {form.description ? (
-        <p className="text-sm text-gray-600 mb-4">{form.description}</p>
+        <p className="text-sm text-gray-600 mb-4 break-words whitespace-pre-wrap">
+  {form.description}
+</p>
+
       ) : null}
       {fields.map((f) => (
         <FieldPreview
@@ -1001,13 +1002,13 @@ console.log("update in handleDisplayModeChange is"+update)
         <div className="flex gap-4 items-stretch h-full">
 
           {/* Left Palette */}
-          <aside className="flex-[2] bg-white rounded-2xl border shadow-sm overflow-y-auto">
+          <aside className="flex-[2] min-w-0 bg-white rounded-2xl border shadow-sm overflow-y-auto">
             <div className="border-b px-3 py-2 text-sm font-medium">Fields</div>
             <FieldPalette fieldTypes={convertedFieldTypes} onAdd={handleAddField} />
           </aside>
 
           {/* Center Canvas */}
-          <main className="flex-[7] bg-white rounded-2xl border shadow-sm p-4 overflow-y-auto">
+          <main className="flex-[7] min-w-0 bg-white rounded-2xl border shadow-sm p-4 overflow-y-auto">
             <div className="mb-4">
               <input
                 className="text-2xl font-semibold w-full outline-none"
@@ -1054,7 +1055,7 @@ console.log("update in handleDisplayModeChange is"+update)
           </main>
 
           {/* Right Inspector / Preview */}
-          <aside className="col-span-12 lg:col-span-3 space-y-4">
+          <aside className="flex-[3] min-w-0 space-y-4">
             {/* <div className="bg-white rounded-2xl border shadow-sm">
             <div className="border-b px-3 py-2 text-sm font-medium flex items-center justify-between">
               <span>Properties</span>
