@@ -469,8 +469,11 @@ function FieldPalette({ fieldTypes, onAdd }) {
 /******************************
  * PREVIEW RENDERER (public-like)
  ******************************/
-function FormPreview({ form, fields }) {
+function FormPreview({ form, fields , formStyle  }) {
+
   const [values, setValues] = useState({});
+
+
 
   const setVal = (k, v) => setValues((s) => ({ ...s, [k]: v }));
 
@@ -487,8 +490,20 @@ function FormPreview({ form, fields }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4">
-      <h3 className="text-lg font-semibold mb-1">{form.name}</h3>
+    <form
+  onSubmit={handleSubmit}
+  className="p-4"
+  style={{
+  }}
+>
+
+      <h3
+  className="text-lg font-semibold mb-1"
+  style={{ color: formStyle.title_color }}
+>
+  {form.name}
+</h3>
+
       {form.description ? (
         <p className="text-sm text-gray-600 mb-4">{form.description}</p>
       ) : null}
@@ -523,6 +538,15 @@ export default function FormBuilder() {
   }
 }, []);
 
+const [showFormStyle , setShowFormStyle] = useState(false)
+const [formStyle, setFormStyle] = useState({
+  background_color: "#ffffff",
+  border_radius: "12px",
+  box_shadow: "0 8px 20px rgba(0,0,0,0.08)",
+  border_color: "rgba(0,0,0,0.08)",
+  title_color: "#111827",
+});
+
 
 const [showSettings, setShowSettings] = useState(false);
 
@@ -531,10 +555,15 @@ const [showSettings, setShowSettings] = useState(false);
   delay_ms: 0,
    popup_trigger: "delay",
   slide_position: "bottom-right" ,
-  scroll_percent: 50
+  scroll_percent: 50,
+   background_color: "#ffffff",
+  border_radius: 8,
+  box_shadow: "0 4px 10px rgba(0,0,0,0.08)",
+  title_color: "#111827",
+  border_color: "#e5e7eb",
 });
 
-  const [formId, setFormId] = useState(nanoid());
+  const [formId, setFormId] = useState("ZD4dRJq6X4Ccif02qghpP");
   const [definitionFields, setDefinitionFields] = useState([]);
   const [form, setForm] = useState(defaultForm());
   const [fields, setFields] = useState(() => [
@@ -670,16 +699,18 @@ const [showSettings, setShowSettings] = useState(false);
 
   }, [definitionFields]);
 
-
-  const saveFormSettings = async (newSettings) => {
+  
+  const saveFormSettings = async (patch) => {
   try {
     console.log("form id inside of saveFormSetting api is"+formId)
+     console.log("patch inside saveformsetting is :", JSON.stringify(patch, null, 2));
+
     await fetch(
       `${LOCAL_FORM_API}/${formId}/settings`,
       {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ settings: newSettings }),
+        body: JSON.stringify({patch}),
       }
     );
   } catch (err) {
@@ -813,7 +844,7 @@ const key = rawKey;
         min: f.min,
         max: f.max,
       })),
-  }), [form, fields]);
+  }), [form, fields,formSettings]);
 
 
 
@@ -840,8 +871,14 @@ const key = rawKey;
   definition: compiled 
 };
 
+  // Print the definition from payload
+ 
+
     setFormId(payload.formId);  // persist it in state
     localStorage.setItem("formId", payload.formId);
+
+   console.log("Definition in payload:", payload.definition);
+    console.log("Full payload:", JSON.stringify(payload, null, 2));
 
 
       const response = await fetchJson(`${LOCAL_FORM_API}/saveDefinition`, {
@@ -859,15 +896,20 @@ const key = rawKey;
   };
 
  const updateSettingsSilent = (patch) => {
-  const updated = { ...formSettings, ...patch };
-  setFormSettings(updated);
-  saveFormSettings(updated); // no alert
+     console.log("Full payload:", JSON.stringify(patch, null, 2));
+
+  setFormSettings((prev)=> ({...prev,...patch}));
+  saveFormSettings(patch);
 };
 
 const updateSettingsWithAlert = (patch) => {
-  const updated = { ...formSettings, ...patch };
-  setFormSettings(updated);
-  saveFormSettings(updated);
+  // const updated = { ...formSettings, ...patch };
+  // setFormSettings(updated);
+  // saveFormSettings(updated);
+
+   console.log("Patch inside of updatSetting with alert:", JSON.stringify(patch, null, 2));
+  setFormSettings((prev)=> ({...prev,...patch}));
+  saveFormSettings(patch);
 
 };
 
@@ -875,7 +917,7 @@ const handlePopupTriggerChange = (newTrigger) => {
   if (newTrigger === "delay") {
     updateSettingsSilent({
       popup_trigger: "delay",
-      // scroll_percent: null,
+      scroll_percent: null,
     });
   }
 
@@ -901,7 +943,7 @@ const handleDisplayModeChange = (mode) => {
     update.delay_ms = 0;
     // update.scroll_percent = null;
   }
-
+console.log("update in handleDisplayModeChange is"+update)
   updateSettingsWithAlert(update);
 };
 
@@ -941,6 +983,15 @@ const handleDisplayModeChange = (mode) => {
   <Settings className="w-4 h-4" />
   Form Settings
 </button>
+
+<button
+  className="px-3 py-2 rounded hover:bg-gray-100 flex items-center gap-2"
+  onClick={() => setShowFormStyle(true)}
+>
+  🎨 Form Style
+</button>
+
+
 
           </div>
         </div>
@@ -1016,18 +1067,32 @@ const handleDisplayModeChange = (mode) => {
             />
           </div> */}
 
-            <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+            <div className="bg-white border shadow-sm overflow-hidden">
               <div className="border-b px-3 py-2 text-sm font-medium flex items-center justify-between">
                 <span>Live Preview</span>
                 <Eye className="w-4 h-4" />
               </div>
-              <div className="max-h-full overflow-auto">
-                <FormPreview form={form} fields={fields.slice().sort((a, b) => a.sort - b.sort)} />
-             
-              </div>
+              
             
              
             </div>
+
+          <div
+  className="max-h-full overflow-auto"
+  style={{
+    backgroundColor: formStyle.background_color,
+    borderRadius: formStyle.border_radius,
+    boxShadow: formStyle.box_shadow,
+    border: `1px solid ${formStyle.border_color}`,
+  }}
+>
+  <FormPreview
+    form={form}
+    fields={fields.slice().sort((a, b) => a.sort - b.sort)}
+    formStyle={formStyle}
+  />
+</div>
+
           </aside>
 
         </div>
@@ -1203,6 +1268,168 @@ const handleDisplayModeChange = (mode) => {
     </div>
   </div>
 )}
+
+{showFormStyle && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="bg-white w-[360px] rounded-xl shadow-lg p-5 relative">
+
+      {/* Close */}
+      <button
+        className="absolute top-3 right-3"
+        onClick={() => setShowFormStyle(false)}
+      >
+        ✕
+      </button>
+
+      <h3 className="text-lg font-semibold mb-4">Form Style</h3>
+
+      {/* Background Color */}
+      <div className="flex items-center justify-between">
+        <label className="text-sm font-medium">
+          Background Color
+        </label>
+
+        <input
+          type="color"
+          value={formStyle.background_color}
+          onChange={(e) =>{
+            const color = e.target.value;
+
+            setFormStyle({
+              ...formStyle,
+              background_color: color,
+            })
+
+              setFormSettings((prev) => ({
+      ...prev,
+      background_color: color,
+    }));
+          }}
+          className="w-12 h-8 cursor-pointer"
+        />
+      </div>
+
+{/* Title Color  */}
+
+<div className="flex items-center justify-between mt-4">
+  <label className="text-sm font-medium">
+    Title Color
+  </label>
+
+  <input
+    type="color"
+    value={formStyle.title_color}
+    onChange={(e) => {
+      const color = e.target.value;
+
+      setFormStyle((prev) => ({
+        ...prev,
+        title_color: color,
+      }));
+
+      setFormSettings((prev) => ({
+        ...prev,
+        title_color: color,
+      }));
+    }}
+    className="w-12 h-8 cursor-pointer"
+  />
+</div>
+
+
+{/* border color  */}
+
+<div className="flex items-center justify-between mt-4">
+  <label className="text-sm font-medium">
+    Border Color
+  </label>
+
+  <input
+    type="color"
+    value={formStyle.border_color}
+    onChange={(e) => {
+      const color = e.target.value;
+
+      setFormStyle((prev) => ({
+        ...prev,
+        border_color: color,
+      }));
+
+      setFormSettings((prev) => ({
+        ...prev,
+        border_color: color,
+      }));
+    }}
+    className="w-12 h-8 cursor-pointer"
+  />
+</div>
+
+{/* border radius  */}
+<div className="mt-4">
+  <label className="text-sm font-medium mb-1 block">
+    Border Radius
+  </label>
+
+  <input
+    type="range"
+    min="0"
+    max="32"
+    value={parseInt(formStyle.border_radius)}
+    onChange={(e) => {
+      const value = `${e.target.value}px`;
+
+      setFormStyle((prev) => ({
+        ...prev,
+        border_radius: value,
+      }));
+
+      setFormSettings((prev) => ({
+        ...prev,
+        border_radius: value,
+      }));
+    }}
+    className="w-full"
+  />
+</div>
+
+{/* box shadow  */}
+
+<div className="mt-4">
+  <label className="text-sm font-medium mb-1 block">
+    Box Shadow
+  </label>
+
+  <select
+    className="w-full border rounded px-2 py-1"
+    value={formStyle.box_shadow}
+    onChange={(e) => {
+      const value = e.target.value;
+
+      setFormStyle((prev) => ({
+        ...prev,
+        box_shadow: value,
+      }));
+
+      setFormSettings((prev) => ({
+        ...prev,
+        box_shadow: value,
+      }));
+    }}
+  >
+    <option value="none">None</option>
+    <option value="0 4px 12px rgba(0,0,0,0.08)">Soft</option>
+    <option value="0 8px 20px rgba(0,0,0,0.12)">Medium</option>
+    <option value="0px 5px 15px rgba(0, 0, 0, 0.35)">Strong</option>
+    
+  </select>
+</div>
+
+
+    </div>
+  </div>
+)}
+
+
 
     </div>
   );
