@@ -5,6 +5,7 @@
  * <script src="https://yourcrm.com/webform/embed.js" data-form-id="123"></script>
  */
 
+
 (function () {
   "use strict";
 
@@ -274,10 +275,9 @@ function renderPopup(wrapper, delay) {
       background: "#fff",
       width: "420px",
       maxHeight: "90vh",
-      overflowY: "auto",
-      borderRadius: "10px",
-      padding: "20px",
+      overflowY: "auto",    
       position: "relative",
+       borderRadius: borderRadius,
     });
 
     // Close button
@@ -485,9 +485,35 @@ function setupPopupTriggers(wrapper) {
 
     // --- Default theme values ---
     var primaryColor = safeGet(config, "theme.primaryColor", "#1a73e8");
-    var bgColor = safeGet(config, "theme.bgColor", "#ffffff");
+var bgColor =
+  safeGet(config, "settings.background_color",
+    safeGet(config, "theme.bgColor", "#ffffff")
+  );
     var textColor = safeGet(config, "theme.textColor", "#222222");
-    var borderRadius = safeGet(config, "theme.borderRadius", "8px");
+    var borderRadius = safeGet(
+  config,
+  "settings.border_radius",
+  "0px"
+);
+
+var boxShadow = safeGet(
+  config,
+  "settings.box_shadow",
+  "0 8px 20px rgba(0,0,0,0.08)"
+);
+
+var borderColor = safeGet(
+  config,
+  "settings.border_color",
+  "rgba(0,0,0,0.08)"
+);
+
+var titleColor = safeGet(
+  config,
+  "settings.title_color",
+  "#111827"
+);
+
 
     // --- Build form HTML ---
 
@@ -496,12 +522,12 @@ function setupPopupTriggers(wrapper) {
       style: {
         backgroundColor: bgColor,
         color: textColor,
-        border: "1px solid rgba(0,0,0,0.08)",
+            border: "1px solid " + borderColor,
         borderRadius: borderRadius,
         padding: "16px 20px",
         boxSizing: "border-box",
         boxShadow:
-          "0 8px 20px rgba(0, 0, 0, 0.04), 0 0 1px rgba(15, 23, 42, 0.08)",
+          boxShadow,
       },
     });
 
@@ -514,6 +540,7 @@ function setupPopupTriggers(wrapper) {
           margin: "0 0 6px 0",
           fontSize: "18px",
           fontWeight: "600",
+          color:titleColor
         },
       });
       wrapper.appendChild(h3);
@@ -589,7 +616,7 @@ function setupPopupTriggers(wrapper) {
         });
         label.textContent =
           field.label + (field.required ? " *" : "");
-        label.setAttribute("for", formDomId + "_" + field.name);
+        label.setAttribute("for", formDomId + "_" + field.id);
         fieldWrapper.appendChild(label);
       }
 
@@ -609,8 +636,8 @@ function setupPopupTriggers(wrapper) {
       var createTextLike = function (type) {
         return createElement("input", {
           type: type,
-          name: field.name,
-          id: formDomId + "_" + field.name,
+          name: field.nameKey,
+          id: formDomId + "_" + field.id,
           placeholder: field.placeholder || "",
           value: field.value || "",
           style: commonInputStyle,
@@ -620,8 +647,8 @@ function setupPopupTriggers(wrapper) {
       switch (field.type) {
         case "textarea":
           inputEl = createElement("textarea", {
-            name: field.name,
-            id: formDomId + "_" + field.name,
+            name: field.nameKey,
+            id: formDomId + "_" + field.id,
             placeholder: field.placeholder || "",
             style: Object.assign({}, commonInputStyle, {
               minHeight: "70px",
@@ -633,8 +660,8 @@ function setupPopupTriggers(wrapper) {
 
         case "dropdown":
           inputEl = createElement("select", {
-            name: field.name,
-            id: formDomId + "_" + field.name,
+            name: field.nameKey,
+            id: formDomId + "_" + field.id,
             style: commonInputStyle,
           });
           if (field.placeholder) {
@@ -675,7 +702,7 @@ function setupPopupTriggers(wrapper) {
             });
             var inputInner = createElement("input", {
               type: field.type === "radio" ? "radio" : "checkbox",
-              name: field.name + (field.type === "checkbox_group" ? "[]" : ""),
+              name: field.nameKey + (field.type === "checkbox_group" ? "[]" : ""),
               value: opt.value,
               style: {
                 marginRight: "5px",
@@ -695,7 +722,7 @@ function setupPopupTriggers(wrapper) {
         case "hidden":
           inputEl = createElement("input", {
             type: "hidden",
-            name: field.name,
+            name: field.nameKey,
             value: field.value || "",
           });
           break;
@@ -732,7 +759,7 @@ function setupPopupTriggers(wrapper) {
           field: field.show_when.field,
           operator: field.show_when.operator || "equals",
           value: field.show_when.value,
-          target: field.name,
+          target: field.nameKey,
         });
       }
     });
@@ -760,14 +787,14 @@ function setupPopupTriggers(wrapper) {
 
     // --- Submit button ---
     var buttonWrapper = createElement("div", {
-      style: { marginTop: "12px" },
+      style: { marginTop: "12px",textAlign:"center" },
     });
     var submitBtn = createElement("button", {
       type: "submit",
       class: "w24-form-submit",
       style: {
-        width: "100%",
-        backgroundColor: primaryColor,
+        width: "31%",
+        backgroundColor: "rgb(79 70 229)",
         color: "#ffffff",
         border: "none",
         padding: "10px 14px",
@@ -860,12 +887,30 @@ function setupPopupTriggers(wrapper) {
       clearStatus();
 
       // Simple client-side validation
-      var invalid = formEl.querySelector(":invalid");
-      if (invalid) {
-        invalid.focus();
-        showStatus("error", "Please fill in all required fields correctly.");
-        return;
-      }
+    var invalid = formEl.querySelector(":invalid");
+if (invalid) {
+  invalid.focus();
+
+  // Try to find label text
+  var fieldLabel = "";
+  if (invalid.id) {
+    var labelEl = formEl.querySelector(
+      'label[for="' + invalid.id + '"]'
+    );
+    if (labelEl) {
+      fieldLabel = labelEl.textContent.replace("*", "").trim();
+    }
+  }
+
+  // Fallback if label not found
+  if (!fieldLabel) {
+    fieldLabel = invalid.name || "This field";
+  }
+
+  showStatus("error", fieldLabel + " is required.");
+  return;
+}
+
 
       setLoading(true);
 
