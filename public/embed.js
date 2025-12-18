@@ -936,7 +936,7 @@ if (invalid) {
         fetch(SUBMIT_API_URL, {
           method: "POST",
           body: formData,
-          credentials: "include",
+          // credentials: "include",
         })
           .then(function (res) {
             if (!res.ok) {
@@ -1038,7 +1038,7 @@ if (invalid) {
 
     fetch(url, {
       method: "GET",
-      credentials: "include",
+      // credentials: "include",
     })
       .then(function (res) {
         if (!res.ok) {
