@@ -267,6 +267,8 @@ function renderPopup(wrapper, delay) {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
+      opacity: "0",
+      transition: "opacity 500ms cubic-bezier(.16,1,.3,1)"
     });
 
     // Popup box
@@ -278,6 +280,13 @@ function renderPopup(wrapper, delay) {
       overflowY: "auto",    
       position: "relative",
        borderRadius: borderRadius,
+
+         opacity: "0",
+      transform: "translateY(24px) scale(0.96)",
+      transition:
+        "opacity 500ms cubic-bezier(.16,1,.3,1), " +
+        "transform 550ms cubic-bezier(.16,1,.3,1)",
+      willChange: "transform, opacity"
     });
 
     // Close button
@@ -309,7 +318,16 @@ function renderPopup(wrapper, delay) {
     popup.appendChild(wrapper);
     overlay.appendChild(popup);
     document.body.appendChild(overlay);
+
+        /* 🔥 THIS LINE FIXES IT */
+    popup.getBoundingClientRect();
+
+    /* animate in */
+    overlay.style.opacity = "1";
+    popup.style.opacity = "1";
+    popup.style.transform = "translateY(0) scale(1)";
   }, delay);
+  
 }
 
 
