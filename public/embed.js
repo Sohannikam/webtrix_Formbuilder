@@ -246,6 +246,8 @@
 var popupDelay = safeGet(config, "settings.delay_ms", 0);
 var popupTrigger = safeGet(config, "settings.popup_trigger", "delay");
 var scrollPercent = safeGet(config, "settings.scroll_percent", 50);
+var showCancelButton = safeGet(config,"settings.show_cancel_button",true);
+
 
 
     function renderInline(container, wrapper, scriptEl) {
@@ -290,31 +292,39 @@ function renderPopup(wrapper, delay) {
     });
 
     // Close button
-    var closeBtn = document.createElement("button");
-    closeBtn.innerHTML = "✕";
-    Object.assign(closeBtn.style, {
-      position: "absolute",
-      top: "10px",
-      right: "12px",
-      border: "none",
-      background: "transparent",
-      fontSize: "18px",
-      cursor: "pointer",
-    });
+  if (showCancelButton) {
+  var closeBtn = document.createElement("button");
+  closeBtn.innerHTML = "✕";
+  Object.assign(closeBtn.style, {
+    position: "absolute",
+    top: "10px",
+    right: "12px",
+    border: "none",
+    background: "transparent",
+    fontSize: "18px",
+    cursor: "pointer",
+  });
 
-    closeBtn.onclick = function () {
-      overlay.remove();
-    };
+  closeBtn.onclick = function () {
+    overlay.remove();
+  };
 
-    overlay.onclick = function () {
-      overlay.remove();
-    };
+  popup.appendChild(closeBtn);
+
+  overlay.onclick = function () {
+    overlay.remove();
+  };
+} else {
+  // ❌ disable overlay close
+  overlay.onclick = null;
+}
+
 
     popup.onclick = function (e) {
       e.stopPropagation();
     };
 
-    popup.appendChild(closeBtn);
+    // popup.appendChild(closeBtn);
     popup.appendChild(wrapper);
     overlay.appendChild(popup);
     document.body.appendChild(overlay);
@@ -322,11 +332,26 @@ function renderPopup(wrapper, delay) {
         /* 🔥 THIS LINE FIXES IT */
     popup.getBoundingClientRect();
 
+    
     /* animate in */
     overlay.style.opacity = "1";
     popup.style.opacity = "1";
     popup.style.transform = "translateY(0) scale(1)";
+
+      popup.addEventListener(
+  "transitionend",
+  function (e) {
+    // Only clean up once transform animation ends
+    if (e.propertyName === "transform") {
+      popup.style.willChange = "auto";
+    }
+  },
+  { once: true }
+);
+
   }, delay);
+
+
   
 }
 
@@ -398,11 +423,6 @@ function injectSlideInCSS() {
     color: #111;
   }
 
-  .w24-slide-in-close:hover::after {
-    content: " Close";
-    font-size: 12px;
-    margin-left: 4px;
-  }
 `;
 
   document.head.appendChild(style);
@@ -419,6 +439,7 @@ function renderSlideIn(wrapper, delay)
   slideContainer.className = "w24-slide-in " + position;
 
   // Close button
+ if (showCancelButton) {
   var closeBtn = document.createElement("button");
   closeBtn.className = "w24-slide-in-close";
   closeBtn.innerHTML = "✕";
@@ -428,6 +449,8 @@ function renderSlideIn(wrapper, delay)
   };
 
   slideContainer.appendChild(closeBtn);
+}
+
   slideContainer.appendChild(wrapper);
   document.body.appendChild(slideContainer);
 
@@ -833,7 +856,35 @@ var titleColor = safeGet(
     buttonWrapper.appendChild(submitBtn);
     formEl.appendChild(buttonWrapper);
 
-   
+         if (showCancelButton) {
+  var cancelBtn = createElement("button", {
+    type: "button",
+    style: {
+      marginLeft: "10px",
+      backgroundColor: "#fc8181",
+      color: "#ffffff",
+      border: "1px solid #d1d5db",
+      padding: "10px 14px",
+      borderRadius: "999px",
+      fontWeight:"500",
+      fontSize:"14px",
+      width:"25%",
+      cursor: "pointer",
+    },
+    text: "Cancel",
+  });
+
+  cancelBtn.onclick = function () {
+    // close popup / slide-in
+    var overlay = wrapper.closest("div[style*='position: fixed']");
+    if (overlay) overlay.remove();
+
+    var slide = wrapper.closest(".w24-slide-in");
+    if (slide) slide.classList.remove("active");
+  };
+
+  buttonWrapper.appendChild(cancelBtn);
+}
 
     // Attach form to wrapper
     wrapper.appendChild(formEl);
