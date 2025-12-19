@@ -586,8 +586,8 @@ const [showSettings, setShowSettings] = useState(false);
   title_color: "#111827",
   border_color: "#e5e7eb",
   show_cancel_button: null,
-    enable_recaptcha: true,
-  recaptcha_site_key: "6LfXjDAsAAAAAHegBMS1hcu7xJKCWw-x-yAP27Rf"
+    enable_turnstile: true,
+  turnstile_site_key: "0x4AAAAAACHmdJoQEfqoBaoW"
 });
 
   const [formId, setFormId] = useState("ZD4dRJq6X4Ccif02qghpP");

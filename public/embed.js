@@ -87,65 +87,97 @@
   // reCAPTCHA v3 Loader (global, guarded)
   // ===================================================================
 
-  var recaptchaScriptLoading = false;
-  var recaptchaReadyPromise = null;
+  // var recaptchaScriptLoading = false;
+  // var recaptchaReadyPromise = null;
 
-  function loadRecaptcha(siteKey) {
-    if (!siteKey) return Promise.resolve(null);
+  // function loadRecaptcha(siteKey) {
+  //   if (!siteKey) return Promise.resolve(null);
 
-    if (window.grecaptcha && window.grecaptcha.execute) {
-      return Promise.resolve(window.grecaptcha);
-    }
+  //   if (window.grecaptcha && window.grecaptcha.execute) {
+  //     return Promise.resolve(window.grecaptcha);
+  //   }
 
-    if (recaptchaReadyPromise) {
-      return recaptchaReadyPromise;
-    }
+  //   if (recaptchaReadyPromise) {
+  //     return recaptchaReadyPromise;
+  //   }
 
-    recaptchaReadyPromise = new Promise(function (resolve, reject) {
-      if (recaptchaScriptLoading) return;
+  //   recaptchaReadyPromise = new Promise(function (resolve, reject) {
+  //     if (recaptchaScriptLoading) return;
 
-      recaptchaScriptLoading = true;
-      var script = document.createElement("script");
-      script.src =
-        "https://www.google.com/recaptcha/api.js?render=" +
-        encodeURIComponent(siteKey);
-      script.async = true;
-      script.defer = true;
+  //     recaptchaScriptLoading = true;
+  //     var script = document.createElement("script");
+  //     script.src =
+  //       "https://www.google.com/recaptcha/api.js?render=" +
+  //       encodeURIComponent(siteKey);
+  //     script.async = true;
+  //     script.defer = true;
 
-      script.onload = function () {
-        if (window.grecaptcha) {
-          window.grecaptcha.ready(function () {
-            resolve(window.grecaptcha);
-          });
-        } else {
-          reject(new Error("reCAPTCHA failed to load"));
-        }
-      };
+  //     script.onload = function () {
+  //       if (window.grecaptcha) {
+  //         window.grecaptcha.ready(function () {
+  //           resolve(window.grecaptcha);
+  //         });
+  //       } else {
+  //         reject(new Error("reCAPTCHA failed to load"));
+  //       }
+  //     };
 
-      script.onerror = function () {
-        reject(new Error("Failed to load reCAPTCHA script"));
-      };
+  //     script.onerror = function () {
+  //       reject(new Error("Failed to load reCAPTCHA script"));
+  //     };
 
-      document.head.appendChild(script);
-    });
+  //     document.head.appendChild(script);
+  //   });
 
-    return recaptchaReadyPromise;
-  }
+  //   return recaptchaReadyPromise;
+  // }
 
-  function executeRecaptcha(siteKey) {
-    if (!siteKey) return Promise.resolve(null);
+  function loadTurnstile() {
+  if (window.turnstile) return Promise.resolve();
 
-    return loadRecaptcha(siteKey).then(function (grecaptcha) {
-      if (!grecaptcha || !grecaptcha.execute) return null;
-      return grecaptcha.execute(siteKey, { action: "submit" });
-    });
-  }
+  return new Promise(function (resolve, reject) {
+    var script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    script.async = true;
+    script.defer = true;
+
+    script.onload = resolve;
+    script.onerror = reject;
+
+    document.head.appendChild(script);
+  });
+}
+
+
+  // function executeRecaptcha(siteKey) {
+  //   if (!siteKey) return Promise.resolve(null);
+
+  //   return loadRecaptcha(siteKey).then(function (grecaptcha) {
+  //     if (!grecaptcha || !grecaptcha.execute) return null;
+  //     return grecaptcha.execute(siteKey, { action: "submit" });
+  //   });
+  // }
 
   // ===================================================================
   // Field Show/Hide Logic
   // - backend can send rules like:
   //   field.show_when = { field: "lead_type", operator: "equals", value: "Business" }
   // ===================================================================
+
+  function executeTurnstile(siteKey) {
+  return loadTurnstile().then(function () {
+    return new Promise(function (resolve) {
+      window.turnstile.render(document.body, {
+        sitekey: siteKey,
+        size: "invisible",
+        callback: function (token) {
+          resolve(token);
+        },
+      });
+    });
+  });
+}
+
 
   function applyFieldVisibility(formEl, rules) {
     if (!rules || !rules.length) return;
@@ -900,9 +932,6 @@ var titleColor = safeGet(
 }
 
 
-
-
-
     // Apply field visibility rules if any
     if (visibilityRules.length) {
       applyFieldVisibility(formEl, visibilityRules);
@@ -910,8 +939,9 @@ var titleColor = safeGet(
 
     // --- Handle form submit ---
     var settings = config.settings || {};
-    var enableRecaptcha = !!settings.enable_recaptcha;
-    var siteKey = settings.recaptcha_site_key || null;
+var enableTurnstile = !!settings.enable_turnstile;
+var siteKey = settings.turnstile_site_key;
+
     var redirectUrl = settings.redirect_url || null;
     var successMessage =
       settings.success_message ||
@@ -986,13 +1016,14 @@ if (invalid) {
       var submitWithToken = function (token) {
         // Append token if provided
         if (token) {
+          console.log("token value is"+token)
           var recInput = formEl.querySelector(
-            'input[name="g-recaptcha-response"]'
+            'input[name="cf-turnstile-response"]'
           );
           if (!recInput) {
             recInput = createElement("input", {
               type: "hidden",
-              name: "g-recaptcha-response",
+              name: "cf-turnstile-response",
             });
             formEl.appendChild(recInput);
           }
@@ -1027,7 +1058,7 @@ if (invalid) {
                 return;
               }
 
-              showStatus("success", data.message || successMessage);
+              showStatus("success", successMessage);
               formEl.reset();
 
               if (successMessageDuration > 0) {
@@ -1052,19 +1083,15 @@ if (invalid) {
           });
       };
 
-      if (enableRecaptcha && siteKey) {
-        executeRecaptcha(siteKey)
-          .then(function (token) {
-            submitWithToken(token);
-          })
-          .catch(function (err) {
-            console.error("reCAPTCHA error", err);
-            showStatus(
-              "error",
-              "Security check failed. Please refresh the page and try again."
-            );
-            setLoading(false);
-          });
+      if (executeTurnstile && siteKey) {
+       executeTurnstile(siteKey)
+  .then(function (token) {
+    submitWithToken(token);
+  })
+  .catch(function () {
+    showStatus("error", "Security verification failed");
+    setLoading(false);
+  });
       } else {
         submitWithToken(null);
       }
