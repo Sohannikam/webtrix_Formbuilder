@@ -469,7 +469,7 @@ function FieldPalette({ fieldTypes, onAdd }) {
 /******************************
  * PREVIEW RENDERER (public-like)
  ******************************/
-function FormPreview({ form, fields , formStyle  }) {
+function FormPreview({ form, fields , formStyle,formSettings  }) {
 
   const [values, setValues] = useState({});
 
@@ -518,7 +518,29 @@ function FormPreview({ form, fields , formStyle  }) {
           editMode={false} // Make sure editMode is false for preview
         />
       ))}
-      <button type="submit" className="px-4 py-2 rounded-md bg-indigo-600 text-white">Submit</button>
+<div className="flex items-center gap-2 mt-4">
+  <button
+    type="submit"
+    className="px-4 py-2 rounded-md bg-indigo-600 text-white"
+  >
+    Submit
+  </button>
+
+  {formSettings?.show_cancel_button && (
+    <button
+      type="button"
+      className="bg-red-400 px-4 py-2 rounded-md border col text-white"
+      onClick={() => {
+        // Preview-only behavior
+        alert("Cancel clicked (preview)");
+      }}
+    >
+      Cancel
+    </button>
+  )}
+</div>
+      
+      
     </form>
   );
 }
@@ -549,6 +571,7 @@ const [formStyle, setFormStyle] = useState({
 });
 
 
+
 const [showSettings, setShowSettings] = useState(false);
 
   const [formSettings, setFormSettings] = useState({
@@ -562,6 +585,9 @@ const [showSettings, setShowSettings] = useState(false);
   box_shadow: "0 4px 10px rgba(0,0,0,0.08)",
   title_color: "#111827",
   border_color: "#e5e7eb",
+  show_cancel_button: null,
+    enable_recaptcha: true,
+  recaptcha_site_key: "6LfXjDAsAAAAAHegBMS1hcu7xJKCWw-x-yAP27Rf"
 });
 
   const [formId, setFormId] = useState("ZD4dRJq6X4Ccif02qghpP");
@@ -596,6 +622,31 @@ const [showSettings, setShowSettings] = useState(false);
 
   const nameKeys = useMemo(() => new Set(fields.map((f) => f.nameKey)), [fields]);
   const selectedField = useMemo(() => fields.find((f) => f.id === selectedId), [fields, selectedId]);
+
+
+  useEffect(() => {
+  async function fetchFormDefinition() {
+    try {
+      const res = await fetch(
+        `${LOCAL_FORM_API}/form/${formId}`
+      );
+
+      const definition = await res.json();
+
+      if (typeof definition?.settings?.show_cancel_button === "boolean") {
+        setFormSettings((prev) => ({
+          ...prev,
+          show_cancel_button: definition.settings.show_cancel_button,
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to fetch form settings", err);
+    }
+  }
+
+  fetchFormDefinition();
+}, [formId]);
+
 
   // Fetch form definitions when component loads
   useEffect(() => {
@@ -826,7 +877,6 @@ const key = rawKey;
   };
 
 
-
   // EXPORT compiled render JSON (for backend save or embed preview)
   const compiled = useMemo(() => ({
     meta: { name: form.name, description: form.description, theme: form.theme },
@@ -918,7 +968,7 @@ const handlePopupTriggerChange = (newTrigger) => {
   if (newTrigger === "delay") {
     updateSettingsSilent({
       popup_trigger: "delay",
-      scroll_percent: null,
+      scroll_percent: 50,
     });
   }
 
@@ -926,7 +976,7 @@ const handlePopupTriggerChange = (newTrigger) => {
     updateSettingsSilent({
       popup_trigger: "scroll",
       delay_sec: null,
-      delay_ms: 0,
+      delay_ms: 2000,
     });
   }
 };
@@ -1091,6 +1141,7 @@ console.log("update in handleDisplayModeChange is"+update)
     form={form}
     fields={fields.slice().sort((a, b) => a.sort - b.sort)}
     formStyle={formStyle}
+     formSettings={formSettings}
   />
 </div>
 
@@ -1264,6 +1315,36 @@ console.log("update in handleDisplayModeChange is"+update)
     </select>
   </div>
 )}
+
+<div className="mt-4">
+  <label className="flex items-center justify-between text-sm font-medium">
+    <span>Show Cancel Button</span>
+
+    <input
+      type="checkbox"
+      checked={formSettings.show_cancel_button ?? true}
+      onChange={(e) => {
+        const value = e.target.checked;
+
+        // ✅ Update local state (no refresh yet)
+        setFormSettings((prev) => ({
+          ...prev,
+          show_cancel_button: value,
+        }));
+
+        // ✅ PATCH only the changed field
+        updateSettingsWithAlert({
+          show_cancel_button: value,
+        });
+      }}
+      className="h-4 w-4"
+    />
+  </label>
+
+  <p className="mt-1 text-xs text-gray-500">
+    If disabled, users must submit the form to close it.
+  </p>
+</div>
 
 
     </div>
