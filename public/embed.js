@@ -1017,8 +1017,9 @@ if (invalid) {
 
       var submitWithToken = function (token) {
         // Append token if provided
+        console.log("inside of submitWithToken")
         if (token) {
-          console.log("token value is"+token)
+          console.log(" inside token exist token value is"+token)
           var recInput = formEl.querySelector(
             'input[name="cf-turnstile-response"]'
           );
@@ -1086,8 +1087,10 @@ if (invalid) {
       };
 
       if (executeTurnstile && siteKey) {
+        console.log("inside of embed.js executeTurnstile && siteKey condition ")
        executeTurnstile(siteKey)
   .then(function (token) {
+    console.log("inside token exists function")
     submitWithToken(token);
   })
   .catch(function () {
