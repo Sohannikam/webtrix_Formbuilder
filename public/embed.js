@@ -941,7 +941,7 @@ var titleColor = safeGet(
 
     // --- Handle form submit ---
     var settings = config.settings || {};
-var enableTurnstile = !!settings.enable_turnstile;
+var executeTurnstile = !!settings.enable_turnstile;
 var siteKey = settings.turnstile_site_key;
 
     var redirectUrl = settings.redirect_url || null;
