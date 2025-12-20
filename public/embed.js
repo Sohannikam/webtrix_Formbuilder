@@ -1098,6 +1098,7 @@ if (invalid) {
     setLoading(false);
   });
       } else {
+        console.log("token is null")
         submitWithToken(null);
       }
     });
