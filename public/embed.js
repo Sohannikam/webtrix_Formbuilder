@@ -164,19 +164,21 @@
   //   field.show_when = { field: "lead_type", operator: "equals", value: "Business" }
   // ===================================================================
 
-  function executeTurnstile(siteKey) {
-  return loadTurnstile().then(function () {
-    return new Promise(function (resolve) {
-      window.turnstile.render(document.body, {
-        sitekey: siteKey,
-        size: "invisible",
-        callback: function (token) {
-          resolve(token);
-        },
-      });
+async function executeTurnstile(siteKey) {
+  await loadTurnstile();
+
+  return new Promise(function (resolve) {
+    var widgetId = window.turnstile.render(document.body, {
+      sitekey: siteKey,
+      size: "invisible",
+      callback: function (token) {
+        window.turnstile.remove(widgetId); // 🔥 cleanup
+        resolve(token);
+      },
     });
   });
 }
+
 
 
   function applyFieldVisibility(formEl, rules) {
@@ -199,7 +201,7 @@
         default:
           return val == expected;
         case "not_equals":
-          return val != expected;
+          return val !== expected;
         case "contains":
           return (val || "").toString().indexOf(expected) !== -1;
         case "checked":
