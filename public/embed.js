@@ -87,61 +87,60 @@
   // reCAPTCHA v3 Loader (global, guarded)
   // ===================================================================
 
-  // var recaptchaScriptLoading = false;
-  // var recaptchaReadyPromise = null;
+  var recaptchaScriptLoading = false;
+  var recaptchaReadyPromise = null;
 
-  // function loadRecaptcha(siteKey) {
-  //   if (!siteKey) return Promise.resolve(null);
+  function loadRecaptcha(siteKey) {
+    if (!siteKey) return Promise.resolve(null);
 
-  //   if (window.grecaptcha && window.grecaptcha.execute) {
-  //     return Promise.resolve(window.grecaptcha);
-  //   }
+    if (window.grecaptcha && window.grecaptcha.execute) {
+      return Promise.resolve(window.grecaptcha);
+    }
 
-  //   if (recaptchaReadyPromise) {
-  //     return recaptchaReadyPromise;
-  //   }
+    if (recaptchaReadyPromise) {
+      return recaptchaReadyPromise;
+    }
 
-  //   recaptchaReadyPromise = new Promise(function (resolve, reject) {
-  //     if (recaptchaScriptLoading) return;
+    recaptchaReadyPromise = new Promise(function (resolve, reject) {
+      if (recaptchaScriptLoading) return;
 
-  //     recaptchaScriptLoading = true;
-  //     var script = document.createElement("script");
-  //     script.src =
-  //       "https://www.google.com/recaptcha/api.js?render=" +
-  //       encodeURIComponent(siteKey);
-  //     script.async = true;
-  //     script.defer = true;
+      recaptchaScriptLoading = true;
+      var script = document.createElement("script");
+      script.src =
+        "https://www.google.com/recaptcha/api.js?render=" +
+        encodeURIComponent(siteKey);
+      script.async = true;
+      script.defer = true;
 
-  //     script.onload = function () {
-  //       if (window.grecaptcha) {
-  //         window.grecaptcha.ready(function () {
-  //           resolve(window.grecaptcha);
-  //         });
-  //       } else {
-  //         reject(new Error("reCAPTCHA failed to load"));
-  //       }
-  //     };
+      script.onload = function () {
+        if (window.grecaptcha) {
+          window.grecaptcha.ready(function () {
+            resolve(window.grecaptcha);
+          });
+        } else {
+          reject(new Error("reCAPTCHA failed to load"));
+        }
+      };
 
-  //     script.onerror = function () {
-  //       reject(new Error("Failed to load reCAPTCHA script"));
-  //     };
+      script.onerror = function () {
+        reject(new Error("Failed to load reCAPTCHA script"));
+      };
 
-  //     document.head.appendChild(script);
-  //   });
+      document.head.appendChild(script);
+    });
 
-  //   return recaptchaReadyPromise;
-  // }
+    return recaptchaReadyPromise;
+  }
 
  
+  function executeRecaptcha(siteKey) {
+    if (!siteKey) return Promise.resolve(null);
 
-  // function executeRecaptcha(siteKey) {
-  //   if (!siteKey) return Promise.resolve(null);
-
-  //   return loadRecaptcha(siteKey).then(function (grecaptcha) {
-  //     if (!grecaptcha || !grecaptcha.execute) return null;
-  //     return grecaptcha.execute(siteKey, { action: "submit" });
-  //   });
-  // }
+    return loadRecaptcha(siteKey).then(function (grecaptcha) {
+      if (!grecaptcha || !grecaptcha.execute) return null;
+      return grecaptcha.execute(siteKey, { action: "submit" });
+    });
+  }
 
   // ===================================================================
   // Field Show/Hide Logic
@@ -215,35 +214,6 @@
     // Initial run
     updateVisibility();
   }
-
-  // ===================================================================
-  // Form Rendering
-  // Expected JSON structure (example, adapt in backend):
-  //
-  // {
-  //   form_id: 123,
-  //   title: "Book Free Demo",
-  //   description: "Short text",
-  //   theme: {
-  //     primaryColor: "#1a73e8",
-  //     bgColor: "#ffffff",
-  //     textColor: "#222222",
-  //     borderRadius: "8px",
-  //     fontFamily: "system-ui, -apple-system, BlinkMacSystemFont",
-  //   },
-  //   custom_css: ".w24-form-container { max-width: 480px; }",
-  //   fields: [
-  //     { name, label, type, placeholder, required, hidden, options, show_when: { field, operator, value } }
-  //   ],
-  //   settings: {
-  //     enable_recaptcha: true,
-  //     recaptcha_site_key: "...",
-  //     success_message: "Thank you! We have received your request.",
-  //     redirect_url: "https://your-site.com/thank-you",
-  //     success_message_duration: 5000
-  //   }
-  // }
-  // ===================================================================
 
 
   function renderForm(config, scriptEl) {
@@ -905,7 +875,6 @@ var titleColor = safeGet(
   renderInline(container, wrapper, scriptEl);
 }
 
-
     // Apply field visibility rules if any
     if (visibilityRules.length) {
       applyFieldVisibility(formEl, visibilityRules);
@@ -913,8 +882,8 @@ var titleColor = safeGet(
 
     // --- Handle form submit ---
     var settings = config.settings || {};
-var executeTurnstile = !!settings.enable_turnstile;
-var siteKey = settings.turnstile_site_key;
+var enableRecaptcha = !!settings.enable_recaptcha;
+var siteKey = settings.recaptcha_site_key;
 
     var redirectUrl = settings.redirect_url || null;
     var successMessage =
@@ -1058,49 +1027,66 @@ if (invalid) {
           });
       };
 
-       function loadTurnstile() {
-  if (window.turnstile) return Promise.resolve();
+//        function loadTurnstile() {
+//   if (window.turnstile) return Promise.resolve();
 
-  return new Promise(function (resolve, reject) {
-    var script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-    script.async = true;
-    script.defer = true;
+//   return new Promise(function (resolve, reject) {
+//     var script = document.createElement("script");
+//     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+//     script.async = true;
+//     script.defer = true;
 
-    script.onload = resolve;
-    script.onerror = reject;
+//     script.onload = resolve;
+//     script.onerror = reject;
 
-    document.head.appendChild(script);
-  });
-}
+//     document.head.appendChild(script);
+//   });
+// }
 
-async function executeTurnstile(siteKey) {
-  await loadTurnstile();
+// async function executeTurnstile(siteKey) {
+//   await loadTurnstile();
 
-  return new Promise(function (resolve) {
-    var widgetId = window.turnstile.render(document.body, {
-      sitekey: siteKey,
-      size: "invisible",
-      callback: function (token) {
-        window.turnstile.remove(widgetId); // 🔥 cleanup
-        resolve(token);
-      },
-    });
-  });
-}
+//   return new Promise(function (resolve) {
+//     var widgetId = window.turnstile.render(document.body, {
+//       sitekey: siteKey,
+//       size: "invisible",
+//       callback: function (token) {
+//         window.turnstile.remove(widgetId); // 🔥 cleanup
+//         resolve(token);
+//       },
+//     });
+//   });
+// }
 
-      if (executeTurnstile && siteKey) {
-        console.log("inside of embed.js executeTurnstile && siteKey condition ")
-       executeTurnstile(siteKey)
-  .then(function (token) {
-    console.log("inside token exists function")
-    submitWithToken(token);
-  })
-  .catch(function () {
-    showStatus("error", "Security verification failed");
-    setLoading(false);
-  });
-      } else {
+
+  //     if (executeRecaptcha && siteKey) {
+  //       console.log("inside of embed.js executeTurnstile && siteKey condition ")
+  //      executeTurnstile(siteKey)
+  // .then(function (token) {
+  //   console.log("inside token exists function")
+  //   submitWithToken(token);
+  // })
+  // .catch(function () {
+  //   showStatus("error", "Security verification failed");
+  //   setLoading(false);
+  // });
+  //     } 
+
+  if (enableRecaptcha && siteKey) {
+        executeRecaptcha(siteKey)
+          .then(function (token) {
+            submitWithToken(token);
+          })
+          .catch(function (err) {
+            console.error("reCAPTCHA error", err);
+            showStatus(
+              "error",
+              "Security check failed. Please refresh the page and try again."
+            );
+            setLoading(false);
+          });
+        }
+  else {
         console.log("token is null")
         submitWithToken(null);
       }
