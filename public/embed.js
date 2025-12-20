@@ -962,12 +962,12 @@ if (invalid) {
         if (token) {
           console.log(" inside token exist token value is"+token)
           var recInput = formEl.querySelector(
-            'input[name="cf-turnstile-response"]'
+            'input[name="g-recaptcha-response"]'
           );
           if (!recInput) {
             recInput = createElement("input", {
               type: "hidden",
-              name: "cf-turnstile-response",
+              name: "g-recaptcha-response",
             });
             formEl.appendChild(recInput);
           }
