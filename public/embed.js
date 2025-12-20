@@ -132,22 +132,7 @@
   //   return recaptchaReadyPromise;
   // }
 
-  function loadTurnstile() {
-  if (window.turnstile) return Promise.resolve();
-
-  return new Promise(function (resolve, reject) {
-    var script = document.createElement("script");
-    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-    script.async = true;
-    script.defer = true;
-
-    script.onload = resolve;
-    script.onerror = reject;
-
-    document.head.appendChild(script);
-  });
-}
-
+ 
 
   // function executeRecaptcha(siteKey) {
   //   if (!siteKey) return Promise.resolve(null);
@@ -164,20 +149,7 @@
   //   field.show_when = { field: "lead_type", operator: "equals", value: "Business" }
   // ===================================================================
 
-async function executeTurnstile(siteKey) {
-  await loadTurnstile();
 
-  return new Promise(function (resolve) {
-    var widgetId = window.turnstile.render(document.body, {
-      sitekey: siteKey,
-      size: "invisible",
-      callback: function (token) {
-        window.turnstile.remove(widgetId); // 🔥 cleanup
-        resolve(token);
-      },
-    });
-  });
-}
 
 
 
@@ -1085,6 +1057,37 @@ if (invalid) {
             setLoading(false);
           });
       };
+
+       function loadTurnstile() {
+  if (window.turnstile) return Promise.resolve();
+
+  return new Promise(function (resolve, reject) {
+    var script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    script.async = true;
+    script.defer = true;
+
+    script.onload = resolve;
+    script.onerror = reject;
+
+    document.head.appendChild(script);
+  });
+}
+
+async function executeTurnstile(siteKey) {
+  await loadTurnstile();
+
+  return new Promise(function (resolve) {
+    var widgetId = window.turnstile.render(document.body, {
+      sitekey: siteKey,
+      size: "invisible",
+      callback: function (token) {
+        window.turnstile.remove(widgetId); // 🔥 cleanup
+        resolve(token);
+      },
+    });
+  });
+}
 
       if (executeTurnstile && siteKey) {
         console.log("inside of embed.js executeTurnstile && siteKey condition ")
