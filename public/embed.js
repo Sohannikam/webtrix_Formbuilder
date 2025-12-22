@@ -1075,6 +1075,9 @@ if (invalid) {
 
             if (isSuccess) {
               console.log("inside of isSuccess succesful")
+
+                markFormSubmitted(formId, 10 * 1000); //10 seconds
+
               if (redirectUrl) {
                 window.location.href = redirectUrl;
                 return;
@@ -1177,6 +1180,43 @@ if (invalid) {
     });
   }
 
+  // when to show the form logic 
+
+  function markFormSubmitted(formId, ttlMs) {
+  try {
+    var now = Date.now();
+    var record = {
+      submittedAt: now,
+      expiresAt: now + ttlMs,
+    };
+    localStorage.setItem(
+      "w24_form_submitted_" + formId,
+      JSON.stringify(record)
+    );
+  } catch (e) {
+    // fail silently (private mode, storage blocked, etc.)
+  }
+}
+
+function isFormRecentlySubmitted(formId) {
+  try {
+    var raw = localStorage.getItem("w24_form_submitted_" + formId);
+    if (!raw) return false;
+
+    var data = JSON.parse(raw);
+    if (!data.expiresAt) return false;
+
+    if (Date.now() > data.expiresAt) {
+      localStorage.removeItem("w24_form_submitted_" + formId);
+      return false;
+    }
+
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
   // ===================================================================
   // Main Entry: run once per <script src="...embed.js" data-form-id="">
   // document.currentScript is unique to each script tag
@@ -1196,6 +1236,12 @@ if (invalid) {
       );
       return;
     }
+
+      // 🚫 BLOCK rendering if already submitted in last 24 hours
+  if (isFormRecentlySubmitted(formId)) {
+    console.log("[Webtrix24 Form] Form already submitted recently, skipping render.");
+    return;
+  }
 
     var existingContainer = document.getElementById("w24_form_container_" + formId);
   if (existingContainer) {

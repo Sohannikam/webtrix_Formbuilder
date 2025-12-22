@@ -1,47 +1,66 @@
-const fetch = require("node-fetch"); // or built-in fetch in Node 18+
+function markFormSubmitted(formId, ttlMs) {
+  try {
+    var now = Date.now();
+    var record = {
+      submittedAt: now,
+      expiresAt: now + ttlMs,
+    };
+    localStorage.setItem(
+      "w24_form_submitted_" + formId,
+      JSON.stringify(record)
+    );
+  } catch (e) {
+    // fail silently (private mode, storage blocked, etc.)
+  }
+}
 
-async function verifyRecaptcha(token) {
-  const secretKey = process.env.RECAPTCHA_SECRET; // Google secret key
-  const url = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${token}`;
+function isFormRecentlySubmitted(formId) {
+  try {
+    var raw = localStorage.getItem("w24_form_submitted_" + formId);
+    if (!raw) return false;
 
-  const res = await fetch(url, { method: "POST" });
-  const data = await res.json();
+    var data = JSON.parse(raw);
+    if (!data.expiresAt) return false;
 
-  // For v3, you can also check the score
-  return data.success && (data.score || 0) >= 0.5;
+    if (Date.now() > data.expiresAt) {
+      localStorage.removeItem("w24_form_submitted_" + formId);
+      return false;
+    }
+
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 
+function init() {
+  var scriptEl = document.currentScript;
+  if (!scriptEl) return;
 
-router.post('/submit', upload.any(), async (req, res) => {
-  try {
-    const formId = req.body.form_id;
-    const token = req.body["g-recaptcha-response"];
+  var formId =
+    scriptEl.getAttribute("data-form-id") ||
+    scriptEl.getAttribute("data-w24-form-id");
 
-    if (!formId) {
-      return res.status(400).json({ success: false, message: "Missing form_id" });
-    }
-
-    // Verify reCAPTCHA if token exists
-    if (token) {
-      const isHuman = await verifyRecaptcha(token);
-      if (!isHuman) {
-        return res.status(403).json({ success: false, message: "Failed security check" });
-      }
-    }
-
-    const submission = new FormSubmission({
-      form_id: formId,
-      fields: req.body,
-      files: req.files,
-      submitted_at: new Date(),
-    });
-
-    await submission.save();
-
-    res.json({ success: true, message: "Form submitted successfully" });
-  } catch (error) {
-    console.error("submit api error", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+  if (!formId) {
+    console.error("[Webtrix24 Form] Missing data-form-id");
+    return;
   }
-});
+
+  // 🚫 BLOCK rendering if already submitted in last 24 hours
+  if (isFormRecentlySubmitted(formId)) {
+    console.log("[Webtrix24 Form] Form already submitted recently, skipping render.");
+    return;
+  }
+
+  if (isSuccess) {
+  // ✅ Mark submission for 24 hours
+  markFormSubmitted(formId, 24 * 60 * 60 * 1000);
+
+  formEl.reset();
+
+  showSuccessAlert(successMessage, function () {
+    closeFormUI(wrapper);
+  });
+  return;
+}
