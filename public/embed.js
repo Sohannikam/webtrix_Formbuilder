@@ -29,6 +29,7 @@
   }
 
   function createElement(tag, attrs) {
+
     var el = document.createElement(tag);
     if (attrs) {
       Object.keys(attrs).forEach(function (key) {
@@ -50,6 +51,24 @@
     var formData = new FormData(form);
     return formData;
   }
+
+
+  function allowOnlyNumbers(input, maxLength) {
+  input.addEventListener("input", function () {
+    input.value = input.value.replace(/\D/g, "");
+    if (maxLength) {
+      input.value = input.value.slice(0, maxLength);
+    }
+  });
+}
+
+function allowOnlyText(input) {
+  input.addEventListener("input", function () {
+    input.value = input.value.replace(/[^a-zA-Z\s]/g, "");
+  });
+}
+
+
 
   function getUTMParams() {
     var params = {};
@@ -458,6 +477,23 @@ var titleColor = safeGet(
         inputEl.readOnly = true;
       }
 
+      // =======================
+// 🔥 Custom validations by field name
+// =======================
+
+var fieldKey = (field.nameKey || "").toLowerCase();
+
+if (fieldKey.includes("mobile") || fieldKey.includes("phone")) {
+  inputEl.setAttribute("inputmode", "numeric");
+  inputEl.setAttribute("pattern", "[0-9]{10}");
+  inputEl.setAttribute("maxlength", "10");
+  allowOnlyNumbers(inputEl, 10);
+}
+
+if (fieldKey.includes("name")) {
+  allowOnlyText(inputEl);
+}
+
       // Basic focus styles via inline style
       inputEl.addEventListener("focus", function () {
         inputEl.style.borderColor = primaryColor;
@@ -480,6 +516,8 @@ var titleColor = safeGet(
           target: field.nameKey,
         });
       }
+
+
     });
 
     // --- Auto UTM + lead source hidden fields ---
@@ -492,6 +530,7 @@ var titleColor = safeGet(
       });
       formEl.appendChild(hidden);
     });
+
 
     var leadSource = getLeadSourceData();
     Object.keys(leadSource).forEach(function (key) {
@@ -562,7 +601,6 @@ var titleColor = safeGet(
 
   buttonWrapper.appendChild(cancelBtn);
 }
-
 
 
 //  Different display modes starts here 
@@ -827,7 +865,7 @@ function setupPopupTriggers(wrapper) {
 
     // --- Handle form submit ---
 
-    function showSuccessAlert(message, onClose) {
+    function showSuccessAlert(message,Title, onClose) {
       console.log("inside of showSuccessAlert")
   // Overlay
   var overlay = document.createElement("div");
@@ -856,7 +894,7 @@ function setupPopupTriggers(wrapper) {
 
   modal.innerHTML = `
     <div style="font-size:42px;margin-bottom:10px;">✅</div>
-    <h3 style="margin:0 0 8px;font-size:18px;">Success</h3>
+    <h3 style="margin:0 0 8px;font-size:18px;">${Title}</h3>
     <p style="margin:0 0 18px;font-size:14px;color:#555;">
       ${message}
     </p>
@@ -871,6 +909,13 @@ function setupPopupTriggers(wrapper) {
     ">OK</button>
   `;
 
+  var style = document.createElement("style");
+style.textContent = `
+@keyframes w24FadeIn {
+  from { opacity:0; transform: scale(0.95); }
+  to { opacity:1; transform: scale(1); }
+}`;
+
   modal.querySelector("button").onclick = function () {
     overlay.remove();
     if (typeof onClose === "function") onClose();
@@ -878,6 +923,7 @@ function setupPopupTriggers(wrapper) {
 
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
+  document.head.appendChild(style)
 }
 
 function closeFormUI(wrapper) {
@@ -895,8 +941,6 @@ function closeFormUI(wrapper) {
   }
 }
 
-
-
     var settings = config.settings || {};
 var enableRecaptcha = !!settings.enable_recaptcha;
 var siteKey = settings.recaptcha_site_key;
@@ -905,8 +949,7 @@ var siteKey = settings.recaptcha_site_key;
     var successMessage =
       settings.success_message ||
       "Thank you! Your details have been submitted.";
-    var successMessageDuration =
-      settings.success_message_duration || 5000;
+    var successMessageDuration = settings.success_message_duration || 5000;
 
     function showStatus(type, message) {
       statusBox.style.display = "block";
@@ -966,6 +1009,21 @@ if (invalid) {
   }
 
   showStatus("error", fieldLabel + " is required.");
+  return;
+}
+
+// Extra validation before submit
+var mobileInput = formEl.querySelector('[name*="mobile"], [name*="phone"]');
+if (mobileInput && mobileInput.value.length !== 10) {
+  showStatus("error", "Mobile number must be 10 digits.");
+  mobileInput.focus();
+  return;
+}
+
+var nameInput = formEl.querySelector('[name*="name"]');
+if (nameInput && !/^[a-zA-Z\s]+$/.test(nameInput.value)) {
+  showStatus("error", "Name can contain only letters.");
+  nameInput.focus();
   return;
 }
 
@@ -1074,9 +1132,15 @@ if (invalid) {
               data.code === 200;
 
             if (isSuccess) {
+              
               console.log("inside of isSuccess succesful")
+              
+var ttlMs= safeGet(config,"settings.reshow_delay_ms",0)
+var successMessage= safeGet(config,"settings.success_title","Thank You")
+var successDescription= safeGet(config,"settings.success_description","Will Contact You")
+console.log("value of showtimer is "+ttlMs)
 
-                markFormSubmitted(formId, 10 * 1000); //10 seconds
+                markFormSubmitted(formId, ttlMs); //10 seconds
 
               if (redirectUrl) {
                 window.location.href = redirectUrl;
@@ -1084,7 +1148,7 @@ if (invalid) {
               }
               formEl.reset();
 
-  showSuccessAlert(successMessage, function () {
+  showSuccessAlert (successDescription,successMessage,function () {
     closeFormUI(wrapper);
   });
   return
@@ -1183,6 +1247,8 @@ if (invalid) {
   // when to show the form logic 
 
   function markFormSubmitted(formId, ttlMs) {
+
+    console.log("value of ttlMs in markFormSubmitted is"+ttlMs)
   try {
     var now = Date.now();
     var record = {
@@ -1207,6 +1273,7 @@ function isFormRecentlySubmitted(formId) {
     if (!data.expiresAt) return false;
 
     if (Date.now() > data.expiresAt) {
+      console.log("inside of isFormRecentlySubmitted greater than")
       localStorage.removeItem("w24_form_submitted_" + formId);
       return false;
     }
