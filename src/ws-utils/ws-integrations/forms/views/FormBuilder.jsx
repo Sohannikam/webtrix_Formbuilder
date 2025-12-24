@@ -763,9 +763,18 @@ export default function FormBuilder() {
         fieldType = "short_text";
       } else if (f.Type.startsWith("text")) {
         fieldType = "long_text";
-      } else if (f.Type.startsWith("int")) {
-        fieldType = "number";
-      } else if (f.Type === "date") {
+      }else if (f.Type.startsWith("int")) {
+  const textIdentifiers = [
+    "pan_number",
+  ];
+
+  if (textIdentifiers.includes(f.Field)) {
+    fieldType = "short_text"; 
+  } else {
+    fieldType = "number";
+  }
+}
+else if (f.Type === "date") {
         fieldType = "date";
       } else if (f.Type.includes("enum")) {
 
