@@ -9,10 +9,12 @@
 (function () {
   "use strict";
 
+
   // ===================== CONFIG: CHANGE THIS TO YOUR BASE URL ==========================
   var BASE_URL = "https://webtrix-backend.onrender.com"; // TODO: update
   var FORM_API_URL = BASE_URL + "/api/webform";
   var SUBMIT_API_URL = BASE_URL + "/api/webform/submit";
+
 
   // ===================================================================
   // Utilities
@@ -29,6 +31,7 @@
   }
 
   function createElement(tag, attrs) {
+
     var el = document.createElement(tag);
     if (attrs) {
       Object.keys(attrs).forEach(function (key) {
@@ -46,10 +49,215 @@
     return el;
   }
 
+    function addHoneypotField(formEl) {
+      console.log("inside honeypot field addHoneypotField");
+  var honeypot = document.createElement("input");
+
+  honeypot.type = "text";
+  honeypot.name = "company_website";
+  honeypot.value = "";
+  honeypot.autocomplete = "off";
+  honeypot.tabIndex = "-1";
+
+  // Hide from humans
+  honeypot.style.position = "absolute";
+  honeypot.style.left = "-9999px";
+  honeypot.style.top = "-9999px";
+
+  formEl.appendChild(honeypot);
+}
+
   function serializeForm(form) {
     var formData = new FormData(form);
     return formData;
   }
+
+// validation fields starts from here 
+
+  function allowOnlyNumbers(input, maxLength) {
+  input.addEventListener("input", function () {
+    input.value = input.value.replace(/\D/g, "");
+    if (maxLength) {
+      input.value = input.value.slice(0, maxLength);
+    }
+  });
+}
+
+function allowOnlyText(input) {
+  input.addEventListener("input", function () {
+    input.value = input.value.replace(/[^a-zA-Z\s]/g, "");
+  });
+}
+
+function isValidGST(gst) {
+  if (!gst) return false;
+
+  // Uppercase for consistency
+  gst = gst.toUpperCase();
+
+  // GST regex
+  var gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
+  return gstRegex.test(gst);
+}
+
+function isValidPAN(pan) {
+  if (!pan) return false;
+
+  pan = pan.toUpperCase();
+
+  // PAN format: ABCDE1234F
+  var panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+
+  return panRegex.test(pan);
+}
+
+function isValidAadhaar(aadhaar) {
+  if (!aadhaar) return false;
+
+  // Aadhaar must be exactly 12 digits
+  var aadhaarRegex = /^[0-9]{12}$/;
+
+  return aadhaarRegex.test(aadhaar);
+}
+
+
+
+// ===================================================
+// CENTRAL FIELD VALIDATION REGISTRY
+// ===================================================
+
+var FIELD_VALIDATORS = {
+
+  mobile: {
+    input: function (el) {
+      el.addEventListener("input", function () {
+        el.value = el.value.replace(/\D/g, "").slice(0, 10);
+      });
+    },
+    submit: function (form, showStatus) {
+      var el = form.querySelector(
+        'input[name*="mobile"], input[name*="phone"], input[name="wa_number"]'
+      );
+      if (!el) return true;
+
+      if (el.value.length !== 10) {
+        showStatus("error", "Mobile number must be 10 digits");
+        el.focus();
+        return false;
+      }
+      return true;
+    }
+  },
+
+  name: {
+    input: function (el) {
+      el.addEventListener("input", function () {
+        el.value = el.value.replace(/[^a-zA-Z\s]/g, "");
+      });
+    },
+    submit: function () {
+      return true; // typing validation is enough
+    }
+  },
+
+  
+  zipcode: {
+    input: function (inputEl) {
+      inputEl.addEventListener("input", function () {
+        inputEl.value = inputEl.value.replace(/\D/g, "");
+      });
+    },
+    submit: function (formEl, showStatus) {
+      var zipInput = formEl.querySelector('[name="zipcode"]');
+      if (!zipInput || !zipInput.value) return true;
+
+      var zip = zipInput.value.trim();
+      var countryCodeEl = formEl.querySelector('[name$="_country"]');
+      var countryCode = countryCodeEl ? countryCodeEl.value : "";
+
+      var valid =
+        countryCode === "+91"
+          ? /^\d{6}$/.test(zip)
+          : countryCode === "+1"
+          ? /^\d{5}(\d{4})?$/.test(zip)
+          : /^\d{4,10}$/.test(zip);
+
+      if (!valid) {
+        showStatus("error", "Please enter a valid zip code");
+        zipInput.focus();
+        return false;
+      }
+      return true;
+    },
+  },
+
+  pan_number: {
+    input: function (inputEl) {
+      inputEl.addEventListener("input", function (e) {
+        e.target.value = e.target.value
+          .toUpperCase()
+          .replace(/[^A-Z0-9]/g, "")
+          .slice(0, 10);
+      });
+    },
+    submit: function (formEl, showStatus) {
+      var el = formEl.querySelector('[name="pan_number"]');
+      if (!el) return true;
+
+      if (!isValidPAN(el.value)) {
+        showStatus("error", "Please enter a valid PAN number");
+        el.focus();
+        return false;
+      }
+      return true;
+    },
+  },
+
+  gst_no: {
+    input: function (inputEl) {
+      inputEl.addEventListener("input", function (e) {
+        e.target.value = e.target.value
+          .toUpperCase()
+          .replace(/[^A-Z0-9]/g, "")
+          .slice(0, 15);
+      });
+    },
+    submit: function (formEl, showStatus) {
+      var el = formEl.querySelector('[name="gst_no"]');
+      if (!el) return true;
+
+      if (!isValidGST(el.value)) {
+        showStatus("error", "Please enter a valid GST number");
+        el.focus();
+        return false;
+      }
+      return true;
+    },
+  },
+
+  adhar_number: {
+    input: function (inputEl) {
+      inputEl.addEventListener("input", function (e) {
+        e.target.value = e.target.value.replace(/\D/g, "").slice(0, 12);
+      });
+    },
+    submit: function (formEl, showStatus) {
+      var el = formEl.querySelector('[name="adhar_number"]');
+      if (!el) return true;
+
+      if (!isValidAadhaar(el.value)) {
+        showStatus("error", "Please enter a valid 12-digit Aadhaar number");
+        el.focus();
+        return false;
+      }
+      return true;
+    },
+  },
+};
+
+
+
 
   function getUTMParams() {
     var params = {};
@@ -157,6 +365,8 @@
   }
 
 
+
+
   function renderForm(config, scriptEl) {
 
     var displayMode = safeGet(config, "settings.display_mode", "inline");
@@ -178,6 +388,7 @@ var showCancelButton = safeGet(config,"settings.show_cancel_button",true);
     var containerId = "w24_form_container_" + formId;
     var formDomId = "w24_form_" + formId;
 
+    
     // --- Insert container after script tag ---
     var container = createElement("div", {
       id: containerId,
@@ -284,6 +495,8 @@ var titleColor = safeGet(
       novalidate: "novalidate",
     });
 
+    addHoneypotField(formEl);
+
     // STATUS area (success/error)
     var statusBox = createElement("div", {
       class: "w24-form-status",
@@ -361,6 +574,146 @@ var titleColor = safeGet(
           style: commonInputStyle,
         });
       };
+
+      // 🔥 Handle Salutation based on field name (semantic override)
+if ((field.nameKey || "").toLowerCase() === "salutation") {
+  inputEl = createElement("select", {
+    name: field.nameKey,
+    id: formDomId + "_" + field.id,
+    style: commonInputStyle,
+  });
+
+  // Placeholder option
+  var placeholderOpt = createElement("option", {
+    value: "",
+    text: "Select salutation",
+    disabled: "disabled",
+    selected: "selected",
+  });
+  inputEl.appendChild(placeholderOpt);
+
+  // Salutation options
+  ["Mr", "Mrs", "Ms", "Dr"].forEach(function (val) {
+    var opt = createElement("option", {
+      value: val,
+      text: val,
+    });
+    inputEl.appendChild(opt);
+  });
+
+  if (field.required) inputEl.required = true;
+
+  fieldWrapper.appendChild(inputEl);
+  formEl.appendChild(fieldWrapper);
+
+  return; // ⛔ stop default rendering
+}
+
+// 🔹 Country Code dropdown
+if (field.nameKey === "country_code") {
+  var selectEl = createElement("select", {
+    name: field.nameKey,
+    id: formDomId + "_" + field.id,
+    style: commonInputStyle,
+  });
+
+  // Placeholder
+  selectEl.appendChild(
+    createElement("option", {
+      value: "",
+      text: "Select country code",
+      disabled: true,
+      selected: true,
+    })
+  );
+
+  [
+    { value: "+91", label: "🇮🇳 India (+91)" },
+    { value: "+1", label: "🇺🇸 USA (+1)" },
+    { value: "+44", label: "🇬🇧 UK (+44)" },
+  ].forEach(function (c) {
+    selectEl.appendChild(
+      createElement("option", {
+        value: c.value,
+        text: c.label,
+      })
+    );
+  });
+
+  fieldWrapper.appendChild(selectEl);
+  formEl.appendChild(fieldWrapper);
+  return; // ⛔ stop further processing
+}
+
+// 🔹 GST State dropdown
+if (field.nameKey === "gst_state") {
+  var selectEl = createElement("select", {
+    name: field.nameKey,
+    id: formDomId + "_" + field.id,
+    style: commonInputStyle,
+  });
+
+  // Placeholder
+  selectEl.appendChild(
+    createElement("option", {
+      value: "",
+      text: "Select state",
+      disabled: true,
+      selected: true,
+    })
+  );
+
+ [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry"
+].forEach(function (state) {
+    selectEl.appendChild(
+      createElement("option", {
+        value: state,
+        text: state,
+      })
+    );
+  });
+
+  fieldWrapper.appendChild(selectEl);
+  formEl.appendChild(fieldWrapper);
+  return; // ⛔ stop here
+}
+
 
       switch (field.type) {
         case "textarea":
@@ -458,6 +811,73 @@ var titleColor = safeGet(
         inputEl.readOnly = true;
       }
 
+      // =======================
+// 🔥 Custom validations by field name
+// =======================
+
+var fieldKey = (field.nameKey || "").toLowerCase();
+
+if (fieldKey.includes("mobile") || fieldKey.includes("phone") || fieldKey.includes("wa_number")) {
+
+  var wrapperDiv = document.createElement("div");
+  wrapperDiv.style.display = "flex";
+  wrapperDiv.style.gap = "6px";
+
+  // Country code select
+  var countrySelect = document.createElement("select");
+  countrySelect.name = field.nameKey + "_country";
+  Object.assign(countrySelect.style, {
+    padding: "9px",
+    borderRadius: "6px",
+    border: "1px solid rgba(148,163,184,0.9)",
+    fontSize: "13px",
+  });
+
+  [
+    { code: "+91", label: "🇮🇳 +91" },
+    { code: "+1", label: "🇺🇸 +1" },
+    { code: "+44", label: "🇬🇧 +44" },
+  ].forEach(function (c) {
+    var opt = document.createElement("option");
+    opt.value = c.code;
+    opt.textContent = c.label;
+    countrySelect.appendChild(opt);
+  });
+
+  // Mobile input
+  var mobileInput = document.createElement("input");
+  mobileInput.type = "text";
+  mobileInput.name = field.nameKey;
+  mobileInput.placeholder = field.placeholder || "Enter mobile number";
+  Object.assign(mobileInput.style, commonInputStyle);
+
+  allowOnlyNumbers(mobileInput, 10);
+
+  wrapperDiv.appendChild(countrySelect);
+  wrapperDiv.appendChild(mobileInput);
+
+  fieldWrapper.appendChild(wrapperDiv);
+  formEl.appendChild(fieldWrapper);
+
+  return; // ⛔ IMPORTANT: skip default rendering
+}
+
+// 🔥 ZIP / Postal Code handling (semantic by field name)
+// if ((field.nameKey || "").toLowerCase() === "zipcode") {
+
+//   // Allow only numbers
+//   inputEl.addEventListener("input", function () {
+//     inputEl.value = inputEl.value.replace(/\D/g, "");
+//   });
+
+// }
+
+
+if (fieldKey.includes("name")) {
+  allowOnlyText(inputEl);
+}
+
+
       // Basic focus styles via inline style
       inputEl.addEventListener("focus", function () {
         inputEl.style.borderColor = primaryColor;
@@ -467,6 +887,13 @@ var titleColor = safeGet(
         inputEl.style.borderColor = "rgba(148, 163, 184, 0.9)";
         inputEl.style.boxShadow = "none";
       });
+
+      // 🔥 Apply centralized input validation
+var validator = FIELD_VALIDATORS[field.nameKey];
+if (validator && validator.input) {
+  validator.input(inputEl);
+}
+
 
       fieldWrapper.appendChild(inputEl);
       formEl.appendChild(fieldWrapper);
@@ -480,6 +907,8 @@ var titleColor = safeGet(
           target: field.nameKey,
         });
       }
+
+
     });
 
     // --- Auto UTM + lead source hidden fields ---
@@ -562,7 +991,6 @@ var titleColor = safeGet(
 
   buttonWrapper.appendChild(cancelBtn);
 }
-
 
 
 //  Different display modes starts here 
@@ -809,6 +1237,10 @@ function setupPopupTriggers(wrapper) {
 
     // Attach form to wrapper
     wrapper.appendChild(formEl);
+
+    // start form render timer here 
+    var formRenderedAt = Date.now();
+
  if (displayMode === "popup") {
   setupPopupTriggers(wrapper);
 }
@@ -827,7 +1259,7 @@ function setupPopupTriggers(wrapper) {
 
     // --- Handle form submit ---
 
-    function showSuccessAlert(message, onClose) {
+    function showSuccessAlert(message,Title, onClose) {
       console.log("inside of showSuccessAlert")
   // Overlay
   var overlay = document.createElement("div");
@@ -856,7 +1288,7 @@ function setupPopupTriggers(wrapper) {
 
   modal.innerHTML = `
     <div style="font-size:42px;margin-bottom:10px;">✅</div>
-    <h3 style="margin:0 0 8px;font-size:18px;">Success</h3>
+    <h3 style="margin:0 0 8px;font-size:18px;">${Title}</h3>
     <p style="margin:0 0 18px;font-size:14px;color:#555;">
       ${message}
     </p>
@@ -871,6 +1303,13 @@ function setupPopupTriggers(wrapper) {
     ">OK</button>
   `;
 
+  var style = document.createElement("style");
+style.textContent = `
+@keyframes w24FadeIn {
+  from { opacity:0; transform: scale(0.95); }
+  to { opacity:1; transform: scale(1); }
+}`;
+
   modal.querySelector("button").onclick = function () {
     overlay.remove();
     if (typeof onClose === "function") onClose();
@@ -878,6 +1317,7 @@ function setupPopupTriggers(wrapper) {
 
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
+  document.head.appendChild(style)
 }
 
 function closeFormUI(wrapper) {
@@ -895,18 +1335,13 @@ function closeFormUI(wrapper) {
   }
 }
 
-
-
     var settings = config.settings || {};
 var enableRecaptcha = !!settings.enable_recaptcha;
 var siteKey = settings.recaptcha_site_key;
 
     var redirectUrl = settings.redirect_url || null;
-    var successMessage =
-      settings.success_message ||
-      "Thank you! Your details have been submitted.";
-    var successMessageDuration =
-      settings.success_message_duration || 5000;
+    
+
 
     function showStatus(type, message) {
       statusBox.style.display = "block";
@@ -970,8 +1405,22 @@ if (invalid) {
 }
 
 
-      setLoading(true);
+// =======================
+// CENTRAL FIELD SUBMIT VALIDATION
+// =======================
+for (var key in FIELD_VALIDATORS) {
+  var validator = FIELD_VALIDATORS[key];
+  if (validator.submit) {
+    var valid = validator.submit(formEl, showStatus);
+    if (!valid) {
+      setLoading(false);
+      return;
+    }
+  }
+}
 
+
+      setLoading(true);
 
         // ===================================================================
   // reCAPTCHA v3 Loader (global, guarded)
@@ -1033,6 +1482,9 @@ if (invalid) {
   }
 
       var submitWithToken = function (token) {
+
+        var submitDurationMs = Date.now() - formRenderedAt;
+
         console.log("inside submitWithToekn to check cache issue")
         // Append token if provided
         console.log("inside of submitWithToken")
@@ -1054,6 +1506,9 @@ if (invalid) {
         var formData = serializeForm(formEl);
         formData.append("form_id", formId);
 
+        // ✅ ADD THIS LINE
+formData.append("_form_render_time", submitDurationMs);
+
         fetch(SUBMIT_API_URL, {
           method: "POST",
           body: formData,
@@ -1074,9 +1529,15 @@ if (invalid) {
               data.code === 200;
 
             if (isSuccess) {
+              
               console.log("inside of isSuccess succesful")
+              
+var ttlMs= safeGet(config,"settings.reshow_delay_ms",0)
+var successMessage= safeGet(config,"settings.success_title","Thank You")
+var successDescription= safeGet(config,"settings.success_description","Will Contact You")
+console.log("value of showtimer is "+ttlMs)
 
-                markFormSubmitted(formId, 10 * 1000); //10 seconds
+                markFormSubmitted(formId, ttlMs); //10 seconds
 
               if (redirectUrl) {
                 window.location.href = redirectUrl;
@@ -1084,7 +1545,7 @@ if (invalid) {
               }
               formEl.reset();
 
-  showSuccessAlert(successMessage, function () {
+  showSuccessAlert (successDescription,successMessage,function () {
     closeFormUI(wrapper);
   });
   return
@@ -1183,6 +1644,8 @@ if (invalid) {
   // when to show the form logic 
 
   function markFormSubmitted(formId, ttlMs) {
+
+    console.log("value of ttlMs in markFormSubmitted is"+ttlMs)
   try {
     var now = Date.now();
     var record = {
@@ -1207,6 +1670,7 @@ function isFormRecentlySubmitted(formId) {
     if (!data.expiresAt) return false;
 
     if (Date.now() > data.expiresAt) {
+      console.log("inside of isFormRecentlySubmitted greater than")
       localStorage.removeItem("w24_form_submitted_" + formId);
       return false;
     }

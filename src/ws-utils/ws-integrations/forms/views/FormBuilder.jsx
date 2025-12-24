@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import { API_BASE_URL } from '@config/config';
 import { fetchJson } from '@utils/fetchJson';
 import { nanoid } from "nanoid";
-import {LOCAL_FORM_API} from '@config/config';
+import { LOCAL_FORM_API } from '@config/config';
 
 
 import {
@@ -441,7 +441,7 @@ function Inspector({ field, allNameKeys, onChange }) {
  * LEFT PALETTE
  ******************************/
 function FieldPalette({ fieldTypes, onAdd }) {
- 
+
   return (
     <div className="p-3 space-y-2">
       <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
@@ -466,10 +466,13 @@ function FieldPalette({ fieldTypes, onAdd }) {
 }
 
 
+
+
+
 /******************************
  * PREVIEW RENDERER (public-like)
  ******************************/
-function FormPreview({ form, fields , formStyle,formSettings  }) {
+function FormPreview({ form, fields, formStyle, formSettings }) {
 
   const [values, setValues] = useState({});
 
@@ -489,23 +492,23 @@ function FormPreview({ form, fields , formStyle,formSettings  }) {
 
   return (
     <form
-  onSubmit={handleSubmit}
-  className="p-4"
-  style={{
-  }}
->
+      onSubmit={handleSubmit}
+      className="p-4"
+      style={{
+      }}
+    >
 
       <h3
-  className="text-lg font-semibold mb-1"
-  style={{ color: formStyle.title_color }}
->
-  {form.name}
-</h3>
+        className="text-lg font-semibold mb-1"
+        style={{ color: formStyle.title_color }}
+      >
+        {form.name}
+      </h3>
 
       {form.description ? (
         <p className="text-sm text-gray-600 mb-4 break-words whitespace-pre-wrap">
-  {form.description}
-</p>
+          {form.description}
+        </p>
 
       ) : null}
       {fields.map((f) => (
@@ -518,29 +521,29 @@ function FormPreview({ form, fields , formStyle,formSettings  }) {
           editMode={false} // Make sure editMode is false for preview
         />
       ))}
-<div className="flex items-center gap-2 mt-4">
-  <button
-    type="submit"
-    className="px-4 py-2 rounded-md bg-indigo-600 text-white"
-  >
-    Submit
-  </button>
+      <div className="flex items-center gap-2 mt-4">
+        <button
+          type="submit"
+          className="px-4 py-2 rounded-md bg-indigo-600 text-white"
+        >
+          Submit
+        </button>
 
-  {formSettings?.show_cancel_button && (
-    <button
-      type="button"
-      className="bg-red-400 px-4 py-2 rounded-md border col text-white"
-      onClick={() => {
-        // Preview-only behavior
-        alert("Cancel clicked (preview)");
-      }}
-    >
-      Cancel
-    </button>
-  )}
-</div>
-      
-      
+        {formSettings?.show_cancel_button && (
+          <button
+            type="button"
+            className="bg-red-400 px-4 py-2 rounded-md border col text-white"
+            onClick={() => {
+              // Preview-only behavior
+              alert("Cancel clicked (preview)");
+            }}
+          >
+            Cancel
+          </button>
+        )}
+      </div>
+
+
     </form>
   );
 }
@@ -553,42 +556,52 @@ function FormPreview({ form, fields , formStyle,formSettings  }) {
 export default function FormBuilder() {
 
   useEffect(() => {
-  const savedFormId = localStorage.getItem("formId");
-  if (savedFormId) {
-    console.log("inside svedFromid")
-    setFormId(savedFormId);
-    console.log("formid inside useEffect of FromBuilder is"+formId)
-  }
-}, []);
+    const savedFormId = localStorage.getItem("formId");
+    if (savedFormId) {
+      console.log("inside svedFromid")
+      setFormId(savedFormId);
+      console.log("formid inside useEffect of FromBuilder is" + formId)
+    }
+  }, []);
 
-const [showFormStyle , setShowFormStyle] = useState(false)
-const [formStyle, setFormStyle] = useState({
-  background_color: "#ffffff",
-  border_radius: "12px",
-  box_shadow: "0 8px 20px rgba(0,0,0,0.08)",
-  border_color: "rgba(0,0,0,0.08)",
-  title_color: "#111827",
-});
+  const [showFormStyle, setShowFormStyle] = useState(false)
+  const [formStyle, setFormStyle] = useState({
+    background_color: "#ffffff",
+    border_radius: "12px",
+    box_shadow: "0 8px 20px rgba(0,0,0,0.08)",
+    border_color: "rgba(0,0,0,0.08)",
+    title_color: "#111827",
+  });
+
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
 
-
-const [showSettings, setShowSettings] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const [formSettings, setFormSettings] = useState({
-  display_mode: "inline",
-  delay_ms: 0,
-   popup_trigger: "delay",
-  slide_position: "bottom-right" ,
-  scroll_percent: 50,
-   background_color: "#ffffff",
-  border_radius: 8,
-  box_shadow: "0 4px 10px rgba(0,0,0,0.08)",
-  title_color: "#111827",
-  border_color: "#e5e7eb",
-  show_cancel_button: null,
+    display_mode: "inline",
+    delay_ms: 0,
+    popup_trigger: "delay",
+    slide_position: "bottom-right",
+    scroll_percent: 50,
+    background_color: "#ffffff",
+    border_radius: 8,
+    box_shadow: "0 4px 10px rgba(0,0,0,0.08)",
+    title_color: "#111827",
+    border_color: "#e5e7eb",
+    show_cancel_button: null,
     enable_recaptcha: true,
-  // recaptcha_site_key: "6LeunDEsAAAAAHKh03CuWp_IEYJLW9uPT3BaJYE0"
-});
+    // recaptcha_site_key: "6LeunDEsAAAAAHKh03CuWp_IEYJLW9uPT3BaJYE0"
+
+    reshow_delay_value: 0,
+    reshow_delay_unit: "seconds", // "seconds" | "minutes" | "hours"
+    reshow_delay_ms: 0,
+      success_title: "Thank You",
+  success_description: "",
+  });
+
+    const [tempSuccessTitle, setTempSuccessTitle]= useState(formSettings.success_title || "")
+  const [tempSuccessDescription,setTempSuccessDescription] = useState(formSettings.success_description || "");
 
   const [formId, setFormId] = useState("ZD4dRJq6X4Ccif02qghpP");
   const [definitionFields, setDefinitionFields] = useState([]);
@@ -625,27 +638,27 @@ const [showSettings, setShowSettings] = useState(false);
 
 
   useEffect(() => {
-  async function fetchFormDefinition() {
-    try {
-      const res = await fetch(
-        `${LOCAL_FORM_API}/form/${formId}`
-      );
+    async function fetchFormDefinition() {
+      try {
+        const res = await fetch(
+          `${LOCAL_FORM_API}/form/${formId}`
+        );
 
-      const definition = await res.json();
+        const definition = await res.json();
 
-      if (typeof definition?.settings?.show_cancel_button === "boolean") {
-        setFormSettings((prev) => ({
-          ...prev,
-          show_cancel_button: definition.settings.show_cancel_button,
-        }));
+        if (typeof definition?.settings?.show_cancel_button === "boolean") {
+          setFormSettings((prev) => ({
+            ...prev,
+            show_cancel_button: definition.settings.show_cancel_button,
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch form settings", err);
       }
-    } catch (err) {
-      console.error("Failed to fetch form settings", err);
     }
-  }
 
-  fetchFormDefinition();
-}, [formId]);
+    fetchFormDefinition();
+  }, [formId]);
 
 
   // Fetch form definitions when component loads
@@ -664,7 +677,30 @@ const [showSettings, setShowSettings] = useState(false);
             "customer_id",
             "record_index",
             "company_id",
-            "record_type"
+            "record_type",
+            "password",
+            "is_password_update",
+            "last_activity_type",
+            "latitude",
+            "longitude",
+            "modified_by",
+            "modified_date",
+            "one_drive_folder",
+            "last_activity_date",
+            "branch_id",
+            "status",
+            "created_date",
+            "created_by",
+            "user_name",
+            "type",
+            "stages",
+            "lead_source",
+            "lead_priority",
+            "assignee",
+            "additional_contacts",
+            "customer_portal_access",
+            "follow_up_date",
+            "customer_image"
           ];
 
           // ✅ filter out unwanted fields
@@ -702,6 +738,14 @@ const [showSettings, setShowSettings] = useState(false);
     }
   };
 
+  const toMs = (value, unit) => {
+  const v = Number(value) || 0;
+  if (unit === "seconds") return v * 1000;
+  if (unit === "minutes") return v * 60 * 1000;
+  if (unit === "hours") return v * 60 * 60 * 1000;
+  return 0;
+};
+
 
   // convertedFieldTypes from database 
   const convertedFieldTypes = useMemo(() => {
@@ -719,28 +763,37 @@ const [showSettings, setShowSettings] = useState(false);
         fieldType = "short_text";
       } else if (f.Type.startsWith("text")) {
         fieldType = "long_text";
-      } else if (f.Type.startsWith("int")) {
-        fieldType = "number";
-      } else if (f.Type === "date") {
+      }else if (f.Type.startsWith("int")) {
+  const textIdentifiers = [
+    "pan_number",
+  ];
+
+  if (textIdentifiers.includes(f.Field)) {
+    fieldType = "short_text"; 
+  } else {
+    fieldType = "number";
+  }
+}
+else if (f.Type === "date") {
         fieldType = "date";
       } else if (f.Type.includes("enum")) {
-        
-      fieldType = "radio";
 
-      const enumValues = f.Type
-        .match(/'([^']+)'/g)
-        ?.map(v => v.replace(/'/g, ""));
+        fieldType = "radio";
 
-      return {
-        type: "radio",
-        label: f.Field.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-        name: f.Field,
-        options: enumValues?.map(v => ({
-          label: v.charAt(0).toUpperCase() + v.slice(1),
-          value: v
-        })) || []
-      };
-    }
+        const enumValues = f.Type
+          .match(/'([^']+)'/g)
+          ?.map(v => v.replace(/'/g, ""));
+
+        return {
+          type: "radio",
+          label: f.Field.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+          name: f.Field,
+          options: enumValues?.map(v => ({
+            label: v.charAt(0).toUpperCase() + v.slice(1),
+            value: v
+          })) || []
+        };
+      }
 
       return {
         type: fieldType,
@@ -751,24 +804,24 @@ const [showSettings, setShowSettings] = useState(false);
 
   }, [definitionFields]);
 
-  
-  const saveFormSettings = async (patch) => {
-  try {
-    console.log("form id inside of saveFormSetting api is"+formId)
-     console.log("patch inside saveformsetting is :", JSON.stringify(patch, null, 2));
 
-    await fetch(
-      `${LOCAL_FORM_API}/${formId}/settings`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({patch}),
-      }
-    );
-  } catch (err) {
-    console.error("Failed to save form settings", err);
-  }
-};
+  const saveFormSettings = async (patch) => {
+    try {
+      console.log("form id inside of saveFormSetting api is" + formId)
+      console.log("patch inside saveformsetting is :", JSON.stringify(patch, null, 2));
+
+      await fetch(
+        `${LOCAL_FORM_API}/${formId}/settings`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ patch }),
+        }
+      );
+    } catch (err) {
+      console.error("Failed to save form settings", err);
+    }
+  };
 
 
   // ADD FIELD
@@ -779,18 +832,18 @@ const [showSettings, setShowSettings] = useState(false);
       ? fieldName.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
       : FIELD_TYPES.find((t) => t.type === type)?.label || "Field";
 
-        let rawKey = fieldName || generateNameKey(label, nameKeys);
+    let rawKey = fieldName || generateNameKey(label, nameKeys);
 
-          if (rawKey === "stages") {
-    rawKey = "lead_stages";
-  }
+    if (rawKey === "stages") {
+      rawKey = "lead_stages";
+    }
 
-        if (rawKey === "enquiry_for") {
-    rawKey = "enquiry_list";
-  }
-  
+    if (rawKey === "enquiry_for") {
+      rawKey = "enquiry_list";
+    }
 
-const key = rawKey;
+
+    const key = rawKey;
 
     const base = {
       id: uid("fld"),
@@ -801,10 +854,10 @@ const key = rawKey;
       sort: fields.length
     };
 
-  const matched = convertedFieldTypes.find((t) => t.name === key);
-  if (matched && matched.type === "radio") {
-    base.options = matched.options;
-  }
+    const matched = convertedFieldTypes.find((t) => t.name === key);
+    if (matched && matched.type === "radio") {
+      base.options = matched.options;
+    }
 
     // If DB field is dropdown type, fetch dynamic options
     if (["dropdown"].includes(type)) {
@@ -880,7 +933,7 @@ const key = rawKey;
   // EXPORT compiled render JSON (for backend save or embed preview)
   const compiled = useMemo(() => ({
     meta: { name: form.name, description: form.description, theme: form.theme },
-     settings: formSettings,
+    settings: formSettings,
     fields: fields
       .slice()
       .sort((a, b) => a.sort - b.sort)
@@ -895,7 +948,7 @@ const key = rawKey;
         min: f.min,
         max: f.max,
       })),
-  }), [form, fields,formSettings]);
+  }), [form, fields, formSettings]);
 
 
 
@@ -909,27 +962,27 @@ const key = rawKey;
     URL.revokeObjectURL(url);
   };
 
- 
-    const jsonString = JSON.stringify(compiled, null, 2);
-    localStorage.setItem("json", jsonString)
+
+  const jsonString = JSON.stringify(compiled, null, 2);
+  localStorage.setItem("json", jsonString)
 
 
 
   const saveFormDefinition = async () => {
     try {
       const payload = {
-  formId: "ZD4dRJq6X4Ccif02qghpP",  
-  definition: compiled 
-};
+        formId: "ZD4dRJq6X4Ccif02qghpP",
+        definition: compiled
+      };
 
-  // Print the definition from payload
- 
+      // Print the definition from payload
 
-    setFormId(payload.formId);  // persist it in state
-    localStorage.setItem("formId", payload.formId);
 
-   console.log("Definition in payload:", payload.definition);
-    console.log("Full payload:", JSON.stringify(payload, null, 2));
+      setFormId(payload.formId);  // persist it in state
+      localStorage.setItem("formId", payload.formId);
+
+      console.log("Definition in payload:", payload.definition);
+      console.log("Full payload:", JSON.stringify(payload, null, 2));
 
 
       const response = await fetchJson(`${LOCAL_FORM_API}/saveDefinition`, {
@@ -946,59 +999,68 @@ const key = rawKey;
     }
   };
 
- const updateSettingsSilent = (patch) => {
-     console.log("Full payload:", JSON.stringify(patch, null, 2));
+  const updateSettingsSilent = (patch) => {
+    console.log("Full payload:", JSON.stringify(patch, null, 2));
 
-  setFormSettings((prev)=> ({...prev,...patch}));
-  saveFormSettings(patch);
-};
-
-const updateSettingsWithAlert = (patch) => {
-  // const updated = { ...formSettings, ...patch };
-  // setFormSettings(updated);
-  // saveFormSettings(updated);
-
-   console.log("Patch inside of updatSetting with alert:", JSON.stringify(patch, null, 2));
-  setFormSettings((prev)=> ({...prev,...patch}));
-  saveFormSettings(patch);
-
-};
-
-const handlePopupTriggerChange = (newTrigger) => {
-  if (newTrigger === "delay") {
-    updateSettingsSilent({
-      popup_trigger: "delay",
-      scroll_percent: 50,
-    });
-  }
-
-  if (newTrigger === "scroll") {
-    updateSettingsSilent({
-      popup_trigger: "scroll",
-      delay_sec: null,
-      delay_ms: 2000,
-    });
-  }
-};
-
-
-const handleDisplayModeChange = (mode) => {
-  // Base update
-  const update = {
-    display_mode: mode,
+    setFormSettings((prev) => ({ ...prev, ...patch }));
+    saveFormSettings(patch);
   };
 
-  // If leaving popup mode, reset popup-specific fields
-  if (mode !== "popup") {
-    update.popup_trigger = null;
-    update.delay_ms = 0;
-    // update.scroll_percent = null;
-  }
-console.log("update in handleDisplayModeChange is"+update)
-  updateSettingsWithAlert(update);
-};
+  const updateSettingsWithAlert = (patch) => {
+    // const updated = { ...formSettings, ...patch };
+    // setFormSettings(updated);
+    // saveFormSettings(updated);
+
+    console.log("Patch inside of updatSetting with alert:", JSON.stringify(patch, null, 2));
+    setFormSettings((prev) => ({ ...prev, ...patch }));
+    saveFormSettings(patch);
+  };
+
+  const handlePopupTriggerChange = (newTrigger) => {
+    if (newTrigger === "delay") {
+      updateSettingsSilent({
+        popup_trigger: "delay",
+        scroll_percent: 50,
+      });
+    }
+
+    if (newTrigger === "scroll") {
+      updateSettingsSilent({
+        popup_trigger: "scroll",
+        delay_sec: null,
+        delay_ms: 2000,
+      });
+    }
+  };
 
 
+  const handleDisplayModeChange = (mode) => {
+    // Base update
+    const update = {
+      display_mode: mode,
+    };
+
+    // If leaving popup mode, reset popup-specific fields
+    if (mode !== "popup") {
+      update.popup_trigger = null;
+      update.delay_ms = 0;
+      // update.scroll_percent = null;
+    }
+    console.log("update in handleDisplayModeChange is" + update)
+    updateSettingsWithAlert(update);
+  };
+
+function handleSaveSuccessMessage ()
+{
+  updateSettingsWithAlert(
+    {
+      success_title:tempSuccessTitle,
+      success_description: tempSuccessDescription,
+    }
+  );
+
+  setShowSuccessModal(false);
+}
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -1028,20 +1090,26 @@ console.log("update in handleDisplayModeChange is"+update)
             </button>
 
             <button
-  className="px-3 py-2 rounded hover:bg-gray-100 flex items-center gap-2"
-  onClick={() => setShowSettings(true)}
->
-  <Settings className="w-4 h-4" />
-  Form Settings
-</button>
+              className="px-3 py-2 rounded hover:bg-gray-100 flex items-center gap-2"
+              onClick={() => setShowSettings(true)}
+            >
+              <Settings className="w-4 h-4" />
+              Form Settings
+            </button>
 
-<button
-  className="px-3 py-2 rounded hover:bg-gray-100 flex items-center gap-2"
-  onClick={() => setShowFormStyle(true)}
->
-  🎨 Form Style
-</button>
+            <button
+              className="px-3 py-2 rounded hover:bg-gray-100 flex items-center gap-2"
+              onClick={() => setShowFormStyle(true)}
+            >
+              🎨 Form Style
+            </button>
 
+            <button
+  className="px-4 py-2 bg-blue-600 text-white rounded"
+  onClick={() => setShowSuccessModal(true)}
+>
+  Edit Success Message
+</button>
 
 
           </div>
@@ -1123,394 +1191,503 @@ console.log("update in handleDisplayModeChange is"+update)
                 <span>Live Preview</span>
                 <Eye className="w-4 h-4" />
               </div>
-              
-            
-             
+
+
+
             </div>
 
-          <div
-  className="max-h-full overflow-auto"
-  style={{
-    backgroundColor: formStyle.background_color,
-    borderRadius: formStyle.border_radius,
-    boxShadow: formStyle.box_shadow,
-    border: `1px solid ${formStyle.border_color}`,
-  }}
->
-  <FormPreview
-    form={form}
-    fields={fields.slice().sort((a, b) => a.sort - b.sort)}
-    formStyle={formStyle}
-     formSettings={formSettings}
-  />
-</div>
+            <div
+              className="max-h-full overflow-auto"
+              style={{
+                backgroundColor: formStyle.background_color,
+                borderRadius: formStyle.border_radius,
+                boxShadow: formStyle.box_shadow,
+                border: `1px solid ${formStyle.border_color}`,
+              }}
+            >
+              <FormPreview
+                form={form}
+                fields={fields.slice().sort((a, b) => a.sort - b.sort)}
+                formStyle={formStyle}
+                formSettings={formSettings}
+              />
+            </div>
 
           </aside>
 
         </div>
       </div>
 
-{/* Form setting modal  */}
+      {/* Form setting modal  */}
 
 
-{showSettings && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-    <div className="bg-white w-[420px] rounded-xl shadow-lg p-5 relative">
-      
-         {/* Close */}
-     <button
-  className="group absolute top-3 right-3 text-black hover:text-black"
-  onClick={() => setShowSettings(false)}
-  aria-label="Close"
->
-  ✕
+      {showSettings && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white w-[420px] rounded-xl shadow-lg p-5 relative">
 
-  {/* Tooltip */}
-  <span
-    className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 
+            {/* Close */}
+            <button
+              className="group absolute top-3 right-3 text-black hover:text-black"
+              onClick={() => setShowSettings(false)}
+              aria-label="Close"
+            >
+              ✕
+
+              {/* Tooltip */}
+              <span
+                className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 
                bg-black text-white text-xs px-2 py-1 rounded
                opacity-0 group-hover:opacity-100 transition-opacity"
-  >
-    Close
-  </span>
-</button>
+              >
+                Close
+              </span>
+            </button>
 
 
-      <h3 className="text-lg font-semibold mb-4">Form Settings</h3>
+            <h3 className="text-lg font-semibold mb-4">Form Settings</h3>
 
-      {/* Display Mode */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-2">
-          Display Mode
-        </label>
+            {/* Display Mode */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">
+                Display Mode
+              </label>
 
-        <div className="space-y-2">
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              checked={formSettings.display_mode === "inline"}
-            onChange={() => handleDisplayModeChange("inline")}
-            />
-            Inline (Embed in page)
-          </label>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={formSettings.display_mode === "inline"}
+                    onChange={() => handleDisplayModeChange("inline")}
+                  />
+                  Inline (Embed in page)
+                </label>
 
-          <label className="flex items-center gap-2">
-          <input
-  type="radio"
-  checked={formSettings.display_mode === "popup"}
-  onChange={() => handleDisplayModeChange("popup")}
-/>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={formSettings.display_mode === "popup"}
+                    onChange={() => handleDisplayModeChange("popup")}
+                  />
 
-            Popup
-          </label>
+                  Popup
+                </label>
 
-          {/* Slide-in placeholder */}
-          <label className="flex items-center gap-2">
-            <input type="radio" 
-            checked={formSettings.display_mode === "slide_in"}
-            onChange={() => handleDisplayModeChange("slide_in")} />
-            Slide-in
-          </label>
-        </div>
-      </div>
+                {/* Slide-in placeholder */}
+                <label className="flex items-center gap-2">
+                  <input type="radio"
+                    checked={formSettings.display_mode === "slide_in"}
+                    onChange={() => handleDisplayModeChange("slide_in")} />
+                  Slide-in
+                </label>
+              </div>
+            </div>
 
-      {/* Popup Delay */}
-  {formSettings.display_mode === "popup" && (
-  <div className="mb-4">
-    <label className="block text-sm font-medium mb-2">
-      Popup Trigger
-    </label>
+            {/* Popup Delay */}
+            {formSettings.display_mode === "popup" && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">
+                  Popup Trigger
+                </label>
 
-    <div className="space-y-2">
-      <label className="flex items-center gap-2">
-      <input
-  type="radio"
-  checked={formSettings.popup_trigger === "delay"}
-  onChange={() => handlePopupTriggerChange("delay")}
-/>
-        After delay
-      </label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      checked={formSettings.popup_trigger === "delay"}
+                      onChange={() => handlePopupTriggerChange("delay")}
+                    />
+                    After delay
+                  </label>
 
-      <label className="flex items-center gap-2">
-  <input
-  type="radio"
-  checked={formSettings.popup_trigger === "scroll"}
-  onChange={() => handlePopupTriggerChange("scroll")}
-/>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      checked={formSettings.popup_trigger === "scroll"}
+                      onChange={() => handlePopupTriggerChange("scroll")}
+                    />
 
-        On scroll
-      </label>
-    </div>
-  </div>
-)}
-
-
-{formSettings.display_mode === "popup" &&
-  formSettings.popup_trigger === "delay" && (
-    <div className="mb-4">
-      <label className="block text-sm font-medium mb-1">
-        Popup Delay (seconds)
-      </label>
-
-      <input
-        type="number"
-        min="0"
-        placeholder="Enter delay"
-        className="w-full border rounded px-3 py-2"
-        value={formSettings.delay_sec ?? ""}
-        onChange={(e) => {
-          const value = e.target.value;
-          updateSettingsSilent({
-            delay_sec: value,
-            delay_ms: value === "" ? 0 : Number(value) * 1000,
-          });
-        }}
-      />
-    </div>
-)}
+                    On scroll
+                  </label>
+                </div>
+              </div>
+            )}
 
 
-{formSettings.display_mode === "popup" &&
-  formSettings.popup_trigger === "scroll" && (
-    <div>
-      <label className="block text-sm font-medium mb-1">
-        Show popup after scroll
-      </label>
+            {formSettings.display_mode === "popup" &&
+              formSettings.popup_trigger === "delay" && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-1">
+                    Popup Delay (seconds)
+                  </label>
 
-      <select
-        className="w-full border rounded px-3 py-2"
-        value={formSettings.scroll_percent}
-        onChange={(e) =>
-          updateSettingsWithAlert({
-            scroll_percent: Number(e.target.value),
-          })
-        }
-      >
-        <option value={50}>50% page scroll</option>
-        <option value={75}>75% page scroll</option>
-      </select>
-    </div>
-)}
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="Enter delay"
+                    className="w-full border rounded px-3 py-2"
+                    value={formSettings.delay_sec ?? ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      updateSettingsSilent({
+                        delay_sec: value,
+                        delay_ms: value === "" ? 0 : Number(value) * 1000,
+                      });
+                    }}
+                  />
+                </div>
+              )}
 
-{/* Slide-in Position */}
-{formSettings.display_mode === "slide_in" && (
-  <div className="mb-4">
-    <label className="block text-sm font-medium mb-1">
-      Slide-in Position
-    </label>
 
-    <select
-      className="w-full border rounded px-3 py-2"
-      value={formSettings.slide_position || "bottom-right"}
-      onChange={(e) =>
-        updateSettingsWithAlert({
-          slide_position: e.target.value,
-        })
-      }
-    >
-      <option value="bottom-right">Bottom Right</option>
-      <option value="bottom-left">Bottom Left</option>
-      <option value="top-right">Top Right</option>
-      <option value="top-left">Top Left</option>
-    </select>
-  </div>
-)}
+            {formSettings.display_mode === "popup" &&
+              formSettings.popup_trigger === "scroll" && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Show popup after scroll
+                  </label>
 
-<div className="mt-4">
-  <label className="flex items-center justify-between text-sm font-medium">
-    <span>Show Cancel Button</span>
+                  <select
+                    className="w-full border rounded px-3 py-2"
+                    value={formSettings.scroll_percent}
+                    onChange={(e) =>
+                      updateSettingsWithAlert({
+                        scroll_percent: Number(e.target.value),
+                      })
+                    }
+                  >
+                    <option value={50}>50% page scroll</option>
+                    <option value={75}>75% page scroll</option>
+                  </select>
+                </div>
+              )}
 
-    <input
-      type="checkbox"
-      checked={formSettings.show_cancel_button ?? true}
-      onChange={(e) => {
-        const value = e.target.checked;
+            {/* Slide-in Position */}
+            {formSettings.display_mode === "slide_in" && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  Slide-in Position
+                </label>
 
-        // ✅ Update local state (no refresh yet)
-        setFormSettings((prev) => ({
-          ...prev,
-          show_cancel_button: value,
-        }));
+                <select
+                  className="w-full border rounded px-3 py-2"
+                  value={formSettings.slide_position || "bottom-right"}
+                  onChange={(e) =>
+                    updateSettingsWithAlert({
+                      slide_position: e.target.value,
+                    })
+                  }
+                >
+                  <option value="bottom-right">Bottom Right</option>
+                  <option value="bottom-left">Bottom Left</option>
+                  <option value="top-right">Top Right</option>
+                  <option value="top-left">Top Left</option>
+                </select>
+              </div>
+            )}
 
-        // ✅ PATCH only the changed field
-        updateSettingsWithAlert({
-          show_cancel_button: value,
-        });
-      }}
-      className="h-4 w-4"
-    />
+            <div className="mt-4">
+              <label className="flex items-center justify-between text-sm font-medium">
+                <span>Show Cancel Button</span>
+
+                <input
+                  type="checkbox"
+                  checked={formSettings.show_cancel_button ?? true}
+                  onChange={(e) => {
+                    const value = e.target.checked;
+
+                    // ✅ Update local state (no refresh yet)
+                    setFormSettings((prev) => ({
+                      ...prev,
+                      show_cancel_button: value,
+                    }));
+
+                    // ✅ PATCH only the changed field
+                    updateSettingsWithAlert({
+                      show_cancel_button: value,
+                    });
+                  }}
+                  className="h-4 w-4"
+                />
+              </label>
+
+              <p className="mt-1 text-xs text-gray-500">
+                If disabled, users must submit the form to close it.
+              </p>
+            </div>
+
+
+<div className="mt-5">
+  <label className="block text-sm font-medium mb-2">
+    Show form again after submission
   </label>
 
+  <div className="flex gap-2">
+    {/* Number input */}
+    <input
+      type="number"
+      min="0"
+      className="w-24 border rounded px-2 py-1"
+      value={formSettings.reshow_delay_value ?? ""}
+      onChange={(e) => {
+        const value = e.target.value;
+        const unit = formSettings.reshow_delay_unit;
+        const ms = toMs(value, unit);
+
+        updateSettingsWithAlert({
+          reshow_delay_value: value,
+          reshow_delay_unit: unit,
+          reshow_delay_ms: ms,
+        });
+      }}
+    />
+
+    {/* Unit select */}
+    <select
+      className="border rounded px-2 py-1"
+      value={formSettings.reshow_delay_unit}
+      onChange={(e) => {
+        const unit = e.target.value;
+        const value = formSettings.reshow_delay_value;
+        const ms = toMs(value, unit);
+
+        updateSettingsWithAlert({
+          reshow_delay_value: value,
+          reshow_delay_unit: unit,
+          reshow_delay_ms: ms,
+        });
+      }}
+    >
+      <option value="seconds">Seconds</option>
+      <option value="minutes">Minutes</option>
+      <option value="hours">Hours</option>
+    </select>
+  </div>
+
   <p className="mt-1 text-xs text-gray-500">
-    If disabled, users must submit the form to close it.
+    After submitting, the form will reappear after this time.
   </p>
 </div>
 
 
-    </div>
-  </div>
-)}
+          </div>
+        </div>
+      )}
 
-{showFormStyle && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-    <div className="bg-white w-[360px] rounded-xl shadow-lg p-5 relative">
+      {showFormStyle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white w-[360px] rounded-xl shadow-lg p-5 relative">
 
-      {/* Close */}
-      <button
-        className="absolute top-3 right-3"
-        onClick={() => setShowFormStyle(false)}
-      >
-        ✕
-      </button>
+            {/* Close */}
+            <button
+              className="absolute top-3 right-3"
+              onClick={() => setShowFormStyle(false)}
+            >
+              ✕
+            </button>
 
-      <h3 className="text-lg font-semibold mb-4">Form Style</h3>
+            <h3 className="text-lg font-semibold mb-4">Form Style</h3>
 
-      {/* Background Color */}
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-medium">
-          Background Color
+            {/* Background Color */}
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">
+                Background Color
+              </label>
+
+              <input
+                type="color"
+                value={formStyle.background_color}
+                onChange={(e) => {
+                  const color = e.target.value;
+
+                  setFormStyle({
+                    ...formStyle,
+                    background_color: color,
+                  })
+
+                  setFormSettings((prev) => ({
+                    ...prev,
+                    background_color: color,
+                  }));
+                }}
+                className="w-12 h-8 cursor-pointer"
+              />
+            </div>
+
+            {/* Title Color  */}
+
+            <div className="flex items-center justify-between mt-4">
+              <label className="text-sm font-medium">
+                Title Color
+              </label>
+
+              <input
+                type="color"
+                value={formStyle.title_color}
+                onChange={(e) => {
+                  const color = e.target.value;
+
+                  setFormStyle((prev) => ({
+                    ...prev,
+                    title_color: color,
+                  }));
+
+                  setFormSettings((prev) => ({
+                    ...prev,
+                    title_color: color,
+                  }));
+                }}
+                className="w-12 h-8 cursor-pointer"
+              />
+            </div>
+
+
+            {/* border color  */}
+
+            <div className="flex items-center justify-between mt-4">
+              <label className="text-sm font-medium">
+                Border Color
+              </label>
+
+              <input
+                type="color"
+                value={formStyle.border_color}
+                onChange={(e) => {
+                  const color = e.target.value;
+
+                  setFormStyle((prev) => ({
+                    ...prev,
+                    border_color: color,
+                  }));
+
+                  setFormSettings((prev) => ({
+                    ...prev,
+                    border_color: color,
+                  }));
+                }}
+                className="w-12 h-8 cursor-pointer"
+              />
+            </div>
+
+            {/* border radius  */}
+            <div className="mt-4">
+              <label className="text-sm font-medium mb-1 block">
+                Border Radius
+              </label>
+
+              <input
+                type="range"
+                min="0"
+                max="32"
+                value={parseInt(formStyle.border_radius)}
+                onChange={(e) => {
+                  const value = `${e.target.value}px`;
+
+                  setFormStyle((prev) => ({
+                    ...prev,
+                    border_radius: value,
+                  }));
+
+                  setFormSettings((prev) => ({
+                    ...prev,
+                    border_radius: value,
+                  }));
+                }}
+                className="w-full"
+              />
+            </div>
+
+            {/* box shadow  */}
+
+            <div className="mt-4">
+              <label className="text-sm font-medium mb-1 block">
+                Box Shadow
+              </label>
+
+              <select
+                className="w-full border rounded px-2 py-1"
+                value={formStyle.box_shadow}
+                onChange={(e) => {
+                  const value = e.target.value;
+
+                  setFormStyle((prev) => ({
+                    ...prev,
+                    box_shadow: value,
+                  }));
+
+                  setFormSettings((prev) => ({
+                    ...prev,
+                    box_shadow: value,
+                  }));
+                }}
+              >
+                <option value="none">None</option>
+                <option value="0 4px 12px rgba(0,0,0,0.08)">Soft</option>
+                <option value="0 8px 20px rgba(0,0,0,0.12)">Medium</option>
+                <option value="0px 5px 15px rgba(0, 0, 0, 0.35)">Strong</option>
+
+              </select>
+            </div>
+
+
+          </div>
+        </div>
+      )}
+
+{showSuccessModal && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-white w-full max-w-md rounded-lg shadow-lg p-5">
+      <h2 className="text-lg font-semibold mb-4">
+        Success Message Settings
+      </h2>
+
+      {/* Success Title */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">
+          Success Title
         </label>
-
         <input
-          type="color"
-          value={formStyle.background_color}
-          onChange={(e) =>{
-            const color = e.target.value;
-
-            setFormStyle({
-              ...formStyle,
-              background_color: color,
-            })
-
-              setFormSettings((prev) => ({
-      ...prev,
-      background_color: color,
-    }));
-          }}
-          className="w-12 h-8 cursor-pointer"
+          type="text"
+          className="w-full border rounded px-3 py-2"
+          value={tempSuccessTitle}
+          onChange={(e) => setTempSuccessTitle(e.target.value)}
+          placeholder="Form submitted successfully"
         />
       </div>
 
-{/* Title Color  */}
+      {/* Success Description */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">
+          Success Description
+        </label>
+        <textarea
+          className="w-full border rounded px-3 py-2"
+          rows={4}
+          value={tempSuccessDescription}
+          onChange={(e) =>
+            setTempSuccessDescription(e.target.value)
+          }
+          placeholder="Thank you for contacting us. We will get back to you shortly."
+        />
+      </div>
 
-<div className="flex items-center justify-between mt-4">
-  <label className="text-sm font-medium">
-    Title Color
-  </label>
+      {/* Footer buttons */}
+      <div className="flex justify-end gap-2 mt-5">
+        <button
+          className="px-4 py-2 border rounded"
+          onClick={() => setShowSuccessModal(false)}
+        >
+          Cancel
+        </button>
 
-  <input
-    type="color"
-    value={formStyle.title_color}
-    onChange={(e) => {
-      const color = e.target.value;
-
-      setFormStyle((prev) => ({
-        ...prev,
-        title_color: color,
-      }));
-
-      setFormSettings((prev) => ({
-        ...prev,
-        title_color: color,
-      }));
-    }}
-    className="w-12 h-8 cursor-pointer"
-  />
-</div>
-
-
-{/* border color  */}
-
-<div className="flex items-center justify-between mt-4">
-  <label className="text-sm font-medium">
-    Border Color
-  </label>
-
-  <input
-    type="color"
-    value={formStyle.border_color}
-    onChange={(e) => {
-      const color = e.target.value;
-
-      setFormStyle((prev) => ({
-        ...prev,
-        border_color: color,
-      }));
-
-      setFormSettings((prev) => ({
-        ...prev,
-        border_color: color,
-      }));
-    }}
-    className="w-12 h-8 cursor-pointer"
-  />
-</div>
-
-{/* border radius  */}
-<div className="mt-4">
-  <label className="text-sm font-medium mb-1 block">
-    Border Radius
-  </label>
-
-  <input
-    type="range"
-    min="0"
-    max="32"
-    value={parseInt(formStyle.border_radius)}
-    onChange={(e) => {
-      const value = `${e.target.value}px`;
-
-      setFormStyle((prev) => ({
-        ...prev,
-        border_radius: value,
-      }));
-
-      setFormSettings((prev) => ({
-        ...prev,
-        border_radius: value,
-      }));
-    }}
-    className="w-full"
-  />
-</div>
-
-{/* box shadow  */}
-
-<div className="mt-4">
-  <label className="text-sm font-medium mb-1 block">
-    Box Shadow
-  </label>
-
-  <select
-    className="w-full border rounded px-2 py-1"
-    value={formStyle.box_shadow}
-    onChange={(e) => {
-      const value = e.target.value;
-
-      setFormStyle((prev) => ({
-        ...prev,
-        box_shadow: value,
-      }));
-
-      setFormSettings((prev) => ({
-        ...prev,
-        box_shadow: value,
-      }));
-    }}
-  >
-    <option value="none">None</option>
-    <option value="0 4px 12px rgba(0,0,0,0.08)">Soft</option>
-    <option value="0 8px 20px rgba(0,0,0,0.12)">Medium</option>
-    <option value="0px 5px 15px rgba(0, 0, 0, 0.35)">Strong</option>
-    
-  </select>
-</div>
-
-
+        <button
+          className="px-4 py-2 bg-green-600 text-white rounded"
+          onClick={handleSaveSuccessMessage}
+        >
+          Save
+        </button>
+      </div>
     </div>
   </div>
 )}
-
 
 
     </div>
