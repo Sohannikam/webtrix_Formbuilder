@@ -555,13 +555,38 @@ function FormPreview({ form, fields, formStyle, formSettings }) {
 
 export default function FormBuilder() {
 
-  useEffect(() => {
-  const savedFormId = localStorage.getItem("formId");
-  console.log("saved Form Id is"+savedFormId)
-  if (savedFormId) {
-    setFormId(savedFormId);
-  }
+//   useEffect(() => {
+//   const savedFormId = localStorage.getItem("formId");
+//   console.log("saved Form Id is"+savedFormId)
+//   if (savedFormId) {
+//     setFormId(savedFormId);
+//   }
   
+// }, []);
+
+useEffect(() => {
+  async function init() {
+    const localId = localStorage.getItem("formId");
+
+    if (localId) {
+      setFormId(localId);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${LOCAL_FORM_API}/forms/last`);
+      const data = await res.json();
+
+      if (data?.formId) {
+        setFormId(data.formId);
+        localStorage.setItem("formId", data.formId);
+      }
+    } catch (e) {
+      console.log("No form found");
+    }
+  }
+
+  init();
 }, []);
 
 
@@ -1003,8 +1028,6 @@ else if (f.Type === "date") {
 
   const jsonString = JSON.stringify(compiled, null, 2);
   localStorage.setItem("json", jsonString)
-
-
 
  const saveFormDefinition = async () => {
   try {
