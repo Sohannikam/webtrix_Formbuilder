@@ -256,9 +256,6 @@ var FIELD_VALIDATORS = {
   },
 };
 
-
-
-
   function getUTMParams() {
     var params = {};
     if (!window.location || !window.location.search) return params;
@@ -1095,7 +1092,7 @@ function renderPopup(wrapper, delay)
 }
 
 
-function injectSlideInCSS() {
+function injectSlideInCSS(borderRadius) {
   if (document.getElementById("w24-slide-in-css")) return;
 
   var style = document.createElement("style");
@@ -1107,7 +1104,7 @@ function injectSlideInCSS() {
     max-height: 85vh;
     background: #fff;
     box-shadow: 0 10px 40px rgba(0,0,0,0.25);
-    border-radius: 12px;
+    border-radius: ${borderRadius};
     overflow-y: auto;
     z-index: 999999;
     transition: transform 0.4s ease;
@@ -1169,7 +1166,7 @@ function injectSlideInCSS() {
 
 function renderSlideIn(wrapper, delay) 
 {
-  injectSlideInCSS();
+  injectSlideInCSS(borderRadius);
 
   var position =
     safeGet(config, "settings.slide_position", "bottom-right");
@@ -1198,7 +1195,8 @@ function renderSlideIn(wrapper, delay)
   }, delay || 0);
 }
 
-function setupPopupTriggers(wrapper) {
+function setupPopupTriggers(wrapper)
+ {
   var opened = false;
 
   function openPopup() {

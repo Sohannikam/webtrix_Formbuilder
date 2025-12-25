@@ -556,13 +556,38 @@ function FormPreview({ form, fields, formStyle, formSettings }) {
 export default function FormBuilder() {
 
   useEffect(() => {
-    const savedFormId = localStorage.getItem("formId");
-    if (savedFormId) {
-      console.log("inside svedFromid")
-      setFormId(savedFormId);
-      console.log("formid inside useEffect of FromBuilder is" + formId)
-    }
-  }, []);
+  const savedFormId = localStorage.getItem("formId");
+  console.log("saved Form Id is"+savedFormId)
+  if (savedFormId) {
+    setFormId(savedFormId);
+  }
+  
+}, []);
+
+
+
+const DEFAULT_FORM_SETTINGS = {
+  display_mode: "inline",        // inline | popup | slide_in
+  delay_ms: 0,
+  popup_trigger: "delay",        // delay | scroll
+  scroll_percent: 50,
+
+  show_cancel_button: true,
+  enable_recaptcha: false,
+  recaptcha_site_key: "",
+
+  background_color: "#ffffff",
+  border_radius: "12px",
+  box_shadow: "0 8px 20px rgba(0,0,0,0.08)",
+  border_color: "rgba(0,0,0,0.08)",
+
+  success_title: "Thank You",
+  success_description: "We will contact you shortly",
+  redirect_url: "",
+
+  reshow_delay_ms: 0,
+};
+
 
   const [showFormStyle, setShowFormStyle] = useState(false)
   const [formStyle, setFormStyle] = useState({
@@ -603,7 +628,7 @@ export default function FormBuilder() {
     const [tempSuccessTitle, setTempSuccessTitle]= useState(formSettings.success_title || "")
   const [tempSuccessDescription,setTempSuccessDescription] = useState(formSettings.success_description || "");
 
-  const [formId, setFormId] = useState("ZD4dRJq6X4Ccif02qghpP");
+  const [formId, setFormId] = useState(null);
   const [definitionFields, setDefinitionFields] = useState([]);
   const [form, setForm] = useState(defaultForm());
   const [fields, setFields] = useState(() => [
@@ -745,6 +770,19 @@ export default function FormBuilder() {
   if (unit === "hours") return v * 60 * 60 * 1000;
   return 0;
 };
+
+function createNewForm() {
+  localStorage.removeItem("formId");
+  setFormId(null);
+
+  setForm({
+    name: "",
+    description: "",
+  });
+
+  setFields([]);
+  setFormSettings(DEFAULT_FORM_SETTINGS);
+}
 
 
   // convertedFieldTypes from database 
@@ -968,36 +1006,36 @@ else if (f.Type === "date") {
 
 
 
-  const saveFormDefinition = async () => {
-    try {
-      const payload = {
-        formId: "ZD4dRJq6X4Ccif02qghpP",
-        definition: compiled
-      };
+ const saveFormDefinition = async () => {
+  try {
+    let id = formId;
 
-      // Print the definition from payload
+    console.log("form id inside saveFormDefinition is"+id);
 
+    // 🔥 CREATE formId only FIRST TIME
+    if (!id) {
+      id = nanoid(16);
+      setFormId(id);
+      localStorage.setItem("formId", id);
+    }
 
-      setFormId(payload.formId);  // persist it in state
-      localStorage.setItem("formId", payload.formId);
+    const payload = {
+      formId: id,
+      definition: compiled,
+    };
 
-      console.log("Definition in payload:", payload.definition);
-      console.log("Full payload:", JSON.stringify(payload, null, 2));
-
-
-      const response = await fetchJson(`${LOCAL_FORM_API}/saveDefinition`, {
+    const response = await fetchJson(`${LOCAL_FORM_API}/saveDefinition`, {
         method: "POST",
         body: JSON.stringify(payload),
       });
 
-      alert("Form saved successfully!");
-      console.log("Saved:", response);
-
-    } catch (err) {
-      console.error("Save error:", err);
-      alert("Error saving form.");
-    }
-  };
+    alert("Form saved successfully");
+    console.log("Saved:", response);
+  } catch (err) {
+    console.error(err);
+    alert("Save failed");
+  }
+};
 
   const updateSettingsSilent = (patch) => {
     console.log("Full payload:", JSON.stringify(patch, null, 2));
@@ -1088,6 +1126,14 @@ function handleSaveSuccessMessage ()
             >
               Save
             </button>
+
+            <button
+  onClick={createNewForm}
+  className="px-3 py-2 bg-gray-200 rounded"
+>
+  + New Form
+</button>
+
 
             <button
               className="px-3 py-2 rounded hover:bg-gray-100 flex items-center gap-2"
