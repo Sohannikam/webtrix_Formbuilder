@@ -87,7 +87,7 @@ function SortableItem({ id, children, className }) {
 /******************************
  * FIELD RENDERERS (Builder + Preview)
  ******************************/
-function FieldPreview({ field, value, onChange, editMode, patchField }) {
+function FieldPreview({ field, value, onChange, editMode, patchField,FieldLabelColor }) {
 
   const required = field.required ? "*" : "";
   // const common = (
@@ -126,7 +126,7 @@ function FieldPreview({ field, value, onChange, editMode, patchField }) {
     }
 
     return (
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-sm font-medium text-gray-700 mb-1" style={{color:FieldLabelColor}} >
         {field.required && <span className="text-red-500 mr-1">*</span>}
         {field.label}
 
@@ -500,13 +500,16 @@ function FormPreview({ form, fields, formStyle, formSettings }) {
 
       <h3
         className="text-lg font-semibold mb-1"
-        style={{ color: formStyle.title_color }}
+        style={{ color: formStyle.title_color,
+          textAlign: formStyle.title_align,
+         }}
       >
         {form.name}
       </h3>
 
       {form.description ? (
-        <p className="text-sm text-gray-600 mb-4 break-words whitespace-pre-wrap">
+        <p className="text-sm text-gray-600 mb-4 break-words whitespace-pre-wrap" style={{color: formStyle.description_color,
+          textAlign: formStyle.description_align}}>
           {form.description}
         </p>
 
@@ -519,6 +522,7 @@ function FormPreview({ form, fields, formStyle, formSettings }) {
           onChange={(v) => setVal(f.nameKey, v)}
           patchField={() => { }} // Add dummy function
           editMode={false} // Make sure editMode is false for preview
+          FieldLabelColor={formStyle.Field_Color}
         />
       ))}
       <div className="flex items-center gap-2 mt-4">
@@ -565,6 +569,7 @@ export default function FormBuilder() {
 // }, []);
 
 useEffect(() => {
+  
   async function init() {
     const localId = localStorage.getItem("formId");
         const forceNew = localStorage.getItem("forceNewForm") === "true";
@@ -630,6 +635,10 @@ const DEFAULT_FORM_SETTINGS = {
     box_shadow: "0 8px 20px rgba(0,0,0,0.08)",
     border_color: "rgba(0,0,0,0.08)",
     title_color: "#111827",
+    description_color: "#111827",
+    title_align:"left",
+    description_align:"left",
+    Field_Color:"#111827"
   });
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -647,6 +656,10 @@ const DEFAULT_FORM_SETTINGS = {
     border_radius: 8,
     box_shadow: "0 4px 10px rgba(0,0,0,0.08)",
     title_color: "#111827",
+    description_color: "#111827",
+    Field_Color:"#111827",
+    title_align:"left",
+    description_align:"left",
     border_color: "#e5e7eb",
     show_cancel_button: null,
     enable_recaptcha: true,
@@ -701,6 +714,9 @@ const DEFAULT_FORM_SETTINGS = {
 
 
   useEffect(() => {
+
+      if (!formId) return; // ✅ CRITICAL
+
     async function fetchFormDefinition() {
       try {
         console.log("inside cancel button fetch id")
@@ -1174,7 +1190,7 @@ const handleCopy = async ()=>{
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="sticky top-0 z-10 border-b bg-white">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between whitespace-nowrap">
           <div className="flex items-center gap-3">
             <input
               className="text-lg font-semibold bg-transparent outline-none"
@@ -1326,6 +1342,7 @@ const handleCopy = async ()=>{
                 fields={fields.slice().sort((a, b) => a.sort - b.sort)}
                 formStyle={formStyle}
                 formSettings={formSettings}
+
               />
             </div>
 
@@ -1655,6 +1672,124 @@ const handleCopy = async ()=>{
               />
             </div>
 
+                {/* description color  */}
+
+                <div className="flex items-center justify-between mt-4">
+              <label className="text-sm font-medium">
+                Description Color
+              </label>
+
+              <input
+                type="color"
+                value={formStyle.description_color}
+                onChange={(e) => {
+                  const color = e.target.value;
+
+                  setFormStyle((prev) => ({
+                    ...prev,
+                    description_color: color,
+                  }));
+
+                  setFormSettings((prev) => ({
+                    ...prev,
+                    description_color: color,
+                  }));
+                }}
+                className="w-12 h-8 cursor-pointer"
+              />
+            </div>
+
+            {/* Field Color  */} 
+
+   <div className="flex items-center justify-between mt-4">
+              <label className="text-sm font-medium">
+                Form Field Color
+              </label>
+
+              <input
+                type="color"
+                value={formStyle.Field_Color}
+                onChange={(e) => {
+                  const color = e.target.value;
+
+                  setFormStyle((prev) => ({
+                    ...prev,
+                    Field_Color: color,
+                  }));
+
+                  setFormSettings((prev) => ({
+                    ...prev,
+                    Field_Color: color,
+                  }));
+                }}
+                className="w-12 h-8 cursor-pointer"
+              />
+            </div>
+
+
+
+            {/* Title Alignment */}
+<div className="flex items-center justify-between mt-4">
+  <label className="text-sm font-medium">
+    Title Alignment
+  </label>
+
+  <select
+    className="border rounded px-2 py-1"
+    value={formStyle.title_align}
+    onChange={(e) => {
+      const value = e.target.value;
+
+      setFormStyle((prev) => ({
+        ...prev,
+        title_align: value,
+      }));
+
+      setFormSettings((prev) => ({
+        ...prev,
+        title_align: value,
+      }));
+    }}
+  >
+    <option value="left">Left</option>
+    <option value="center">Center</option>
+    <option value="right">Right</option>
+  </select>
+</div>
+
+
+{/* Description Alignment */}
+<div className="flex items-center justify-between mt-4">
+  <label className="text-sm font-medium">
+    Description Alignment
+  </label>
+
+  <select
+    className="border rounded px-2 py-1"
+    value={formStyle.description_align}
+    onChange={(e) => {
+      const value = e.target.value;
+
+      setFormStyle((prev) => ({
+        ...prev,
+        description_align: value,
+      }));
+
+      setFormSettings((prev) => ({
+        ...prev,
+        description_align: value,
+      }));
+    }}
+  >
+    <option value="left">Left</option>
+    <option value="center">Center</option>
+    <option value="right">Right</option>
+  </select>
+</div>
+
+
+
+
 
             {/* border color  */}
 
@@ -1742,6 +1877,32 @@ const handleCopy = async ()=>{
 
               </select>
             </div>
+
+
+            {/* save button  */}                                   
+                
+                <div className="justify-center text-center align-middle mt-4">
+                <button
+  className="bg-blue-600 text-white px-4 py-2 rounded"
+  onClick={() =>{
+    updateSettingsWithAlert({
+      background_color: formStyle.background_color,
+      border_radius: formStyle.border_radius,
+      box_shadow: formStyle.box_shadow,
+      border_color: formStyle.border_color,
+      title_color: formStyle.title_color,
+      description_color: formStyle.description_color,
+      title_align:formStyle.title_align,
+      description_align:formStyle.description_align,
+      Field_Color:formStyle.Field_Color,
+    });
+          setShowFormStyle(false);
+
+  }}
+>
+  Save
+</button>
+</div>
 
 
           </div>
