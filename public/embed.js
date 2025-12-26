@@ -129,6 +129,80 @@ function isValidAadhaar(aadhaar) {
 
 var FIELD_VALIDATORS = {
 
+  office_land_line: {
+  input: function (el) {
+    // Allow digits only
+    el.addEventListener("input", function () {
+      el.value = el.value.replace(/\D/g, "").slice(0, 11);
+    });
+  },
+
+  submit: function (formEl, showStatus) {
+    var el = formEl.querySelector('[name="office_land_line"]');
+    if (!el) return true;
+
+    var value = el.value.trim();
+
+    // ✅ Optional field → skip if empty
+    if (!value && !el.required) {
+      return true;
+    }
+
+    // ✅ India landline formats:
+    // 8 digits (local) OR 10–11 digits (STD + number)
+    var valid =
+      /^\d{8}$/.test(value) ||        // local landline
+      /^\d{10,11}$/.test(value);      // STD + landline
+
+    if (!valid) {
+      showStatus(
+        "error",
+        "Please enter a valid office landline number"
+      );
+      el.focus();
+      return false;
+    }
+
+    return true;
+  }
+},
+
+  email: {
+  input: function (el) {
+    // normalize email while typing
+    el.addEventListener("input", function () {
+      el.value = el.value.trim();
+    });
+  },
+
+  submit: function (formEl, showStatus) {
+    var el = formEl.querySelector(
+      'input[type="email"], input[name*="email"]'
+    );
+
+    if (!el) return true;
+
+    var value = el.value.trim();
+
+    // ✅ Optional field → skip if empty
+    if (!value && !el.required) {
+      return true;
+    }
+
+    // ✅ Simple & safe email regex
+    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+    if (!emailRegex.test(value)) {
+      showStatus("error", "Please enter a valid email address");
+      el.focus();
+      return false;
+    }
+
+    return true;
+  }
+},
+
+
   mobile: {
     input: function (el) {
       el.addEventListener("input", function () {
@@ -141,7 +215,14 @@ var FIELD_VALIDATORS = {
       );
       if (!el) return true;
 
-      if (el.value.length !== 10) {
+        var value = el.value.trim();
+
+  // ✅ If empty AND not required → skip validation
+  if (!value && !el.required) {
+    return true;
+  }
+
+      if (value.length !== 10) {
         showStatus("error", "Mobile number must be 10 digits");
         el.focus();
         return false;
@@ -172,7 +253,15 @@ var FIELD_VALIDATORS = {
       var zipInput = formEl.querySelector('[name="zipcode"]');
       if (!zipInput || !zipInput.value) return true;
 
+      
+
       var zip = zipInput.value.trim();
+
+      if(!zip && !zip.required)
+      {
+        return true;
+      }
+
       var countryCodeEl = formEl.querySelector('[name$="_country"]');
       var countryCode = countryCodeEl ? countryCodeEl.value : "";
 
@@ -205,7 +294,15 @@ var FIELD_VALIDATORS = {
       var el = formEl.querySelector('[name="pan_number"]');
       if (!el) return true;
 
-      if (!isValidPAN(el.value)) {
+        var value = el.value.trim();
+
+  // ✅ If empty AND not required → skip validation
+  if (!value && !el.required) {
+    return true;
+  }
+
+
+      if (!isValidPAN(value)) {
         showStatus("error", "Please enter a valid PAN number");
         el.focus();
         return false;
@@ -227,7 +324,14 @@ var FIELD_VALIDATORS = {
       var el = formEl.querySelector('[name="gst_no"]');
       if (!el) return true;
 
-      if (!isValidGST(el.value)) {
+      var value = el.value.trim();
+
+  // ✅ If empty AND not required → skip validation
+  if (!value && !el.required) {
+    return true;
+  }
+
+      if (!isValidGST(value)) {
         showStatus("error", "Please enter a valid GST number");
         el.focus();
         return false;
@@ -246,7 +350,14 @@ var FIELD_VALIDATORS = {
       var el = formEl.querySelector('[name="adhar_number"]');
       if (!el) return true;
 
-      if (!isValidAadhaar(el.value)) {
+      var value = el.value.trim();
+
+  // ✅ If empty AND not required → skip validation
+  if (!value && !el.required) {
+    return true;
+  }
+
+      if (!isValidAadhaar(value)) {
         showStatus("error", "Please enter a valid 12-digit Aadhaar number");
         el.focus();
         return false;
@@ -440,6 +551,30 @@ var titleColor = safeGet(
   "#111827"
 );
 
+var descriptionColor = safeGet(
+  config,
+  "settings.description_color",
+  "#111827"
+);
+
+var aligntextTitle = safeGet(
+  config,
+  "settings.title_align",
+  "left"
+);
+var aligntextDescription = safeGet(
+  config,
+  "settings.description_align",
+  "left"
+);
+
+var fieldLabelColor = safeGet(
+  config,
+  "settings.Field_Color",
+  "#111827"
+);
+
+console.log("description color is"+descriptionColor)
 
     // --- Build form HTML ---
 
@@ -466,7 +601,8 @@ var titleColor = safeGet(
           margin: "0 0 6px 0",
           fontSize: "18px",
           fontWeight: "600",
-          color:titleColor
+          color:titleColor,
+          textAlign:aligntextTitle,
         },
       });
       wrapper.appendChild(h3);
@@ -481,6 +617,8 @@ var titleColor = safeGet(
           margin: "0 0 16px 0",
           fontSize: "13px",
           opacity: "0.9",
+          color:descriptionColor,
+          textAlign:aligntextDescription,
         },
       });
       wrapper.appendChild(p);
@@ -540,6 +678,7 @@ var titleColor = safeGet(
             marginBottom: "4px",
             fontSize: "13px",
             fontWeight: "500",
+            color:fieldLabelColor,
           },
         });
         label.textContent =
