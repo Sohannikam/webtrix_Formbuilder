@@ -567,6 +567,14 @@ export default function FormBuilder() {
 useEffect(() => {
   async function init() {
     const localId = localStorage.getItem("formId");
+        const forceNew = localStorage.getItem("forceNewForm") === "true";
+
+
+        if (forceNew) {
+          setIsNewForm(true);
+      console.log("New form flow – skipping auto-load");
+      return;
+    }
 
     if (localId) {
       setFormId(localId);
@@ -615,6 +623,7 @@ const DEFAULT_FORM_SETTINGS = {
 
 
   const [showFormStyle, setShowFormStyle] = useState(false)
+  const[copybtn, setCopybtn]=useState(false);
   const [formStyle, setFormStyle] = useState({
     background_color: "#ffffff",
     border_radius: "12px",
@@ -679,6 +688,10 @@ const DEFAULT_FORM_SETTINGS = {
   ]);
 
   const [selectedId, setSelectedId] = useState(null);
+  const [isNewForm, setIsNewForm] = useState(false);
+  const [showEmbedModal,setShowEmbedModal]=useState(false);
+  const [embedScript, setEmbedScript]= useState("");
+
   const [showPreview, setShowPreview] = useState(false);
 
   const sensors = useSensors(useSensor(MouseSensor), useSensor(TouchSensor));
@@ -690,6 +703,7 @@ const DEFAULT_FORM_SETTINGS = {
   useEffect(() => {
     async function fetchFormDefinition() {
       try {
+        console.log("inside cancel button fetch id")
         const res = await fetch(
           `${LOCAL_FORM_API}/form/${formId}`
         );
@@ -796,14 +810,14 @@ const DEFAULT_FORM_SETTINGS = {
   return 0;
 };
 
-function createNewForm() {
+function createNewForm() 
+{
   localStorage.removeItem("formId");
   setFormId(null);
+  localStorage.setItem("forceNewForm", "true");
+  console.log("local storage is saved for forceNewForm")
 
-  setForm({
-    name: "",
-    description: "",
-  });
+   setIsNewForm(true); 
 
   setFields([]);
   setFormSettings(DEFAULT_FORM_SETTINGS);
@@ -1028,11 +1042,11 @@ else if (f.Type === "date") {
 
   const jsonString = JSON.stringify(compiled, null, 2);
   localStorage.setItem("json", jsonString)
-
+  
  const saveFormDefinition = async () => {
   try {
     let id = formId;
-
+    let createdNow = false;
     console.log("form id inside saveFormDefinition is"+id);
 
     // 🔥 CREATE formId only FIRST TIME
@@ -1040,8 +1054,16 @@ else if (f.Type === "date") {
       id = nanoid(16);
       setFormId(id);
       localStorage.setItem("formId", id);
-    }
 
+        // ✅ new form is officially created
+  localStorage.removeItem("forceNewForm");
+      createdNow = true;
+    }
+    
+if(createdNow && isNewForm){
+   showEmbedScriptModal(id); 
+    setIsNewForm(false);  
+}
     const payload = {
       formId: id,
       definition: compiled,
@@ -1059,6 +1081,17 @@ else if (f.Type === "date") {
     alert("Save failed");
   }
 };
+
+function showEmbedScriptModal(formId) {
+  setEmbedScript(`
+<script src="https://webtrixformbuilder-8ae4b5.netlify.app/embed.js"
+        data-form-id="${formId}">
+</script>
+  `);
+
+  setShowEmbedModal(true);
+}
+
 
   const updateSettingsSilent = (patch) => {
     console.log("Full payload:", JSON.stringify(patch, null, 2));
@@ -1121,6 +1154,20 @@ function handleSaveSuccessMessage ()
   );
 
   setShowSuccessModal(false);
+}
+
+const handleCopy = async ()=>{
+
+  try {
+          await navigator.clipboard.writeText(embedScript);
+          setCopybtn(true);
+
+          setTimeout(()=>{
+            setCopybtn(false);
+          },3000)
+  } catch (error) {
+    console.log("error in handleCopy "+error)
+  }
 }
 
   return (
@@ -1752,6 +1799,42 @@ function handleSaveSuccessMessage ()
           onClick={handleSaveSuccessMessage}
         >
           Save
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{showEmbedModal && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-lg w-[520px] p-6 relative">
+
+      <h2 className="text-lg font-semibold mb-3">
+        Embed Your Form
+      </h2>
+
+      <p className="text-sm text-gray-600 mb-3">
+        Copy and paste this script into your website.
+      </p>
+
+      <pre className="bg-gray-100 text-sm p-3 rounded overflow-x-auto">
+        <code>{embedScript}</code>
+      </pre>
+
+      <div className="flex justify-end gap-2 mt-4">
+        <button
+          className="px-4 py-2 bg-gray-200 rounded"
+          onClick={() => setShowEmbedModal(false)}
+        >
+          Close
+        </button>
+
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+          onClick={handleCopy}
+          disabled={copybtn}
+        >
+      {copybtn?'Copied':'Copy Script'}
         </button>
       </div>
     </div>
