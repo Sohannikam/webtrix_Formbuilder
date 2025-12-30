@@ -5,7 +5,8 @@ import Cookies from 'js-cookie';
 import { useLocation } from 'react-router-dom';
 let lastSelectedId = null;
 
-export const fetchJson = async (url, options = {}) => {
+export const fetchJson = async (url, options = {}) => 
+  {
   try {
     const defaultHeaders = {
       'Content-Type': 'application/json',
