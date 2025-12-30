@@ -3,6 +3,21 @@ import { API_BASE_URL } from '@config/config';
 import { fetchJson } from '@utils/fetchJson';
 import { nanoid } from "nanoid";
 import { LOCAL_FORM_API } from '@config/config';
+import EmbedScriptModal from "@modals/EmbedScriptModal";
+import ShowSuccessModal from "@modals/ShowSuccessModal";
+import FormSettingsModal from "@modals/FormSettingsModal";
+import FormStyleModal from "@modals/FormStyleModal";
+
+import { useFormId } from "@hooks/useFromId";
+
+import {
+  fetchDropdownOptionsApi,
+  fetchMenuDefinitions,
+  saveFormDefinitionApi,
+  saveFormSettingsApi,
+  fetchFormDefinitionApi,
+} from "@api/allApi";
+
 
 
 import {
@@ -568,40 +583,8 @@ export default function FormBuilder() {
   
 // }, []);
 
-useEffect(() => {
-  
-  async function init() {
-    const localId = localStorage.getItem("formId");
-        const forceNew = localStorage.getItem("forceNewForm") === "true";
 
-
-        if (forceNew) {
-          setIsNewForm(true);
-      console.log("New form flow – skipping auto-load");
-      return;
-    }
-
-    if (localId) {
-      setFormId(localId);
-      return;
-    }
-
-    try {
-      const res = await fetch(`${LOCAL_FORM_API}/forms/last`);
-      const data = await res.json();
-
-      if (data?.formId) {
-        setFormId(data.formId);
-        localStorage.setItem("formId", data.formId);
-      }
-    } catch (e) {
-      console.log("No form found");
-    }
-  }
-
-  init();
-}, []);
-
+const { formId, setFormId, isNewForm, setIsNewForm } = useFormId();
 
 
 const DEFAULT_FORM_SETTINGS = {
@@ -675,7 +658,6 @@ const DEFAULT_FORM_SETTINGS = {
     const [tempSuccessTitle, setTempSuccessTitle]= useState(formSettings.success_title || "")
   const [tempSuccessDescription,setTempSuccessDescription] = useState(formSettings.success_description || "");
 
-  const [formId, setFormId] = useState(null);
   const [definitionFields, setDefinitionFields] = useState([]);
   const [form, setForm] = useState(defaultForm());
   const [fields, setFields] = useState(() => [
@@ -701,7 +683,6 @@ const DEFAULT_FORM_SETTINGS = {
   ]);
 
   const [selectedId, setSelectedId] = useState(null);
-  const [isNewForm, setIsNewForm] = useState(false);
   const [showEmbedModal,setShowEmbedModal]=useState(false);
   const [embedScript, setEmbedScript]= useState("");
 
@@ -717,14 +698,10 @@ const DEFAULT_FORM_SETTINGS = {
 
       if (!formId) return; // ✅ CRITICAL
 
-    async function fetchFormDefinition() {
+    async function load() {
       try {
-        console.log("inside cancel button fetch id")
-        const res = await fetch(
-          `${LOCAL_FORM_API}/form/${formId}`
-        );
 
-        const definition = await res.json();
+      const definition = await fetchFormDefinitionApi(formId);
 
         if (typeof definition?.settings?.show_cancel_button === "boolean") {
           setFormSettings((prev) => ({
@@ -737,22 +714,16 @@ const DEFAULT_FORM_SETTINGS = {
       }
     }
 
-    fetchFormDefinition();
+    load();
   }, [formId]);
 
 
-  // Fetch form definitions when component loads
   useEffect(() => {
-    const loadFormDefinitions = async () => {
-      try {
+  async function load() {
+    try {
+      const response = await fetchMenuDefinitions(92);
+      if (!response?.data) return;
 
-        const response = await fetchJson(`${API_BASE_URL}/getDefinations`, {
-          method: 'POST',
-          body: JSON.stringify({ menuID: `92` }),
-        });
-        // setLinkedFields(response?.data || []);
-        if (response?.data) {
-          // ❌ fields you want to remove
           const removeList = [
             "customer_id",
             "record_index",
@@ -774,7 +745,7 @@ const DEFAULT_FORM_SETTINGS = {
             "user_name",
             "type",
             "stages",
-            "lead_source",
+            // "lead_source",
             "lead_priority",
             "assignee",
             "additional_contacts",
@@ -783,40 +754,17 @@ const DEFAULT_FORM_SETTINGS = {
             "customer_image"
           ];
 
-          // ✅ filter out unwanted fields
-          const filtered = response.data.filter(f => !removeList.includes(f.Field));
-
-          setDefinitionFields(filtered);
-        }
-      } catch (error) {
-        console.error('Error loading form definitions:', error);
-      }
-    };
-
-    loadFormDefinitions();
-  }, []); // Run only once on mount
-
-  const fetchDropdownOptions = async (slug) => {
-    try {
-      const response = await fetchJson(`${API_BASE_URL}/categorySlugList`, {
-        method: "POST",
-        body: JSON.stringify({ status: "active", slug }),
-      });
-
-      // Option A: Stringify for readable output
-      console.log("Response of dropdown:", JSON.stringify(response, null, 2));
-
-      const list = response?.data?.[0]?.sublist || [];
-
-      return list.map(item => ({
-        label: item.categoryName,
-        value: item.category_id,
-      }));
+      setDefinitionFields(
+        response.data.filter(f => !removeList.includes(f.Field))
+      );
     } catch (err) {
-      console.error("Dropdown fetch error for slug:", slug, err);
-      return [];
+      console.error(err);
     }
-  };
+  }
+
+  load();
+}, []);
+
 
   const toMs = (value, unit) => {
   const v = Number(value) || 0;
@@ -898,26 +846,36 @@ else if (f.Type === "date") {
   }, [definitionFields]);
 
 
-  const saveFormSettings = async (patch) => {
-    try {
-      console.log("form id inside of saveFormSetting api is" + formId)
-      console.log("patch inside saveformsetting is :", JSON.stringify(patch, null, 2));
+  // const saveFormSettings = async (patch) => {
+  //   try {
+  //     console.log("form id inside of saveFormSetting api is" + formId)
+  //     console.log("patch inside saveformsetting is :", JSON.stringify(patch, null, 2));
 
-      await fetch(
-        `${LOCAL_FORM_API}/${formId}/settings`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ patch }),
-        }
-      );
-    } catch (err) {
-      console.error("Failed to save form settings", err);
-    }
-  };
+  //     await fetch(
+  //       `${LOCAL_FORM_API}/${formId}/settings`,
+  //       {
+  //         method: "PUT",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify({ patch }),
+  //       }
+  //     );
+  //   } catch (err) {
+  //     console.error("Failed to save form settings", err);
+  //   }
+  // };
 
 
   // ADD FIELD
+  
+  const saveFormSettings = async (patch) => {
+  try {
+    await saveFormSettingsApi({ formId, patch });
+  } catch (err) {
+    console.error("Failed to save form settings", err);
+  }
+};
+
+  
   const handleAddField = (type, fieldName) => {
 
     // Label from DB field
@@ -962,7 +920,7 @@ else if (f.Type === "date") {
         base.options = []; // this create new field in base as options
 
         // Fetch async and update the field options
-        fetchDropdownOptions(key).then((opts) => {
+        fetchDropdownOptionsApi(key).then((opts) => {
           setFields((prev) =>
             prev.map((f) =>
               f.id === base.id ? { ...f, options: opts } : f
@@ -1080,18 +1038,13 @@ if(createdNow && isNewForm){
    showEmbedScriptModal(id); 
     setIsNewForm(false);  
 }
-    const payload = {
+     await saveFormDefinitionApi({
       formId: id,
-      definition: compiled,
-    };
-
-    const response = await fetchJson(`${LOCAL_FORM_API}/saveDefinition`, {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
+      compiled,
+    });
 
     alert("Form saved successfully");
-    console.log("Saved:", response);
+
   } catch (err) {
     console.error(err);
     alert("Save failed");
@@ -1354,537 +1307,26 @@ const handleCopy = async ()=>{
       {/* Form setting modal  */}
 
 
-      {showSettings && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white w-[420px] rounded-xl shadow-lg p-5 relative">
 
-            {/* Close */}
-            <button
-              className="group absolute top-3 right-3 text-black hover:text-black"
-              onClick={() => setShowSettings(false)}
-              aria-label="Close"
-            >
-              ✕
-
-              {/* Tooltip */}
-              <span
-                className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2 
-               bg-black text-white text-xs px-2 py-1 rounded
-               opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                Close
-              </span>
-            </button>
-
-
-            <h3 className="text-lg font-semibold mb-4">Form Settings</h3>
-
-            {/* Display Mode */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">
-                Display Mode
-              </label>
-
-              <div className="space-y-2">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={formSettings.display_mode === "inline"}
-                    onChange={() => handleDisplayModeChange("inline")}
-                  />
-                  Inline (Embed in page)
-                </label>
-
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={formSettings.display_mode === "popup"}
-                    onChange={() => handleDisplayModeChange("popup")}
-                  />
-
-                  Popup
-                </label>
-
-                {/* Slide-in placeholder */}
-                <label className="flex items-center gap-2">
-                  <input type="radio"
-                    checked={formSettings.display_mode === "slide_in"}
-                    onChange={() => handleDisplayModeChange("slide_in")} />
-                  Slide-in
-                </label>
-              </div>
-            </div>
-
-            {/* Popup Delay */}
-            {formSettings.display_mode === "popup" && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">
-                  Popup Trigger
-                </label>
-
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      checked={formSettings.popup_trigger === "delay"}
-                      onChange={() => handlePopupTriggerChange("delay")}
-                    />
-                    After delay
-                  </label>
-
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      checked={formSettings.popup_trigger === "scroll"}
-                      onChange={() => handlePopupTriggerChange("scroll")}
-                    />
-
-                    On scroll
-                  </label>
-                </div>
-              </div>
-            )}
-
-
-            {formSettings.display_mode === "popup" &&
-              formSettings.popup_trigger === "delay" && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">
-                    Popup Delay (seconds)
-                  </label>
-
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="Enter delay"
-                    className="w-full border rounded px-3 py-2"
-                    value={formSettings.delay_sec ?? ""}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      updateSettingsSilent({
-                        delay_sec: value,
-                        delay_ms: value === "" ? 0 : Number(value) * 1000,
-                      });
-                    }}
-                  />
-                </div>
-              )}
-
-
-            {formSettings.display_mode === "popup" &&
-              formSettings.popup_trigger === "scroll" && (
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Show popup after scroll
-                  </label>
-
-                  <select
-                    className="w-full border rounded px-3 py-2"
-                    value={formSettings.scroll_percent}
-                    onChange={(e) =>
-                      updateSettingsWithAlert({
-                        scroll_percent: Number(e.target.value),
-                      })
-                    }
-                  >
-                    <option value={50}>50% page scroll</option>
-                    <option value={75}>75% page scroll</option>
-                  </select>
-                </div>
-              )}
-
-            {/* Slide-in Position */}
-            {formSettings.display_mode === "slide_in" && (
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
-                  Slide-in Position
-                </label>
-
-                <select
-                  className="w-full border rounded px-3 py-2"
-                  value={formSettings.slide_position || "bottom-right"}
-                  onChange={(e) =>
-                    updateSettingsWithAlert({
-                      slide_position: e.target.value,
-                    })
-                  }
-                >
-                  <option value="bottom-right">Bottom Right</option>
-                  <option value="bottom-left">Bottom Left</option>
-                  <option value="top-right">Top Right</option>
-                  <option value="top-left">Top Left</option>
-                </select>
-              </div>
-            )}
-
-            <div className="mt-4">
-              <label className="flex items-center justify-between text-sm font-medium">
-                <span>Show Cancel Button</span>
-
-                <input
-                  type="checkbox"
-                  checked={formSettings.show_cancel_button ?? true}
-                  onChange={(e) => {
-                    const value = e.target.checked;
-
-                    // ✅ Update local state (no refresh yet)
-                    setFormSettings((prev) => ({
-                      ...prev,
-                      show_cancel_button: value,
-                    }));
-
-                    // ✅ PATCH only the changed field
-                    updateSettingsWithAlert({
-                      show_cancel_button: value,
-                    });
-                  }}
-                  className="h-4 w-4"
-                />
-              </label>
-
-              <p className="mt-1 text-xs text-gray-500">
-                If disabled, users must submit the form to close it.
-              </p>
-            </div>
-
-
-<div className="mt-5">
-  <label className="block text-sm font-medium mb-2">
-    Show form again after submission
-  </label>
-
-  <div className="flex gap-2">
-    {/* Number input */}
-    <input
-      type="number"
-      min="0"
-      className="w-24 border rounded px-2 py-1"
-      value={formSettings.reshow_delay_value ?? ""}
-      onChange={(e) => {
-        const value = e.target.value;
-        const unit = formSettings.reshow_delay_unit;
-        const ms = toMs(value, unit);
-
-        updateSettingsWithAlert({
-          reshow_delay_value: value,
-          reshow_delay_unit: unit,
-          reshow_delay_ms: ms,
-        });
-      }}
-    />
-
-    {/* Unit select */}
-    <select
-      className="border rounded px-2 py-1"
-      value={formSettings.reshow_delay_unit}
-      onChange={(e) => {
-        const unit = e.target.value;
-        const value = formSettings.reshow_delay_value;
-        const ms = toMs(value, unit);
-
-        updateSettingsWithAlert({
-          reshow_delay_value: value,
-          reshow_delay_unit: unit,
-          reshow_delay_ms: ms,
-        });
-      }}
-    >
-      <option value="seconds">Seconds</option>
-      <option value="minutes">Minutes</option>
-      <option value="hours">Hours</option>
-    </select>
-  </div>
-
-  <p className="mt-1 text-xs text-gray-500">
-    After submitting, the form will reappear after this time.
-  </p>
-</div>
-
-
-          </div>
-        </div>
-      )}
-
-      {showFormStyle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white w-[360px] rounded-xl shadow-lg p-5 relative">
-
-            {/* Close */}
-            <button
-              className="absolute top-3 right-3"
-              onClick={() => setShowFormStyle(false)}
-            >
-              ✕
-            </button>
-
-            <h3 className="text-lg font-semibold mb-4">Form Style</h3>
-
-            {/* Background Color */}
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">
-                Background Color
-              </label>
-
-              <input
-                type="color"
-                value={formStyle.background_color}
-                onChange={(e) => {
-                  const color = e.target.value;
-
-                  setFormStyle({
-                    ...formStyle,
-                    background_color: color,
-                  })
-
-                  setFormSettings((prev) => ({
-                    ...prev,
-                    background_color: color,
-                  }));
-                }}
-                className="w-12 h-8 cursor-pointer"
-              />
-            </div>
-
-            {/* Title Color  */}
-
-            <div className="flex items-center justify-between mt-4">
-              <label className="text-sm font-medium">
-                Title Color
-              </label>
-
-              <input
-                type="color"
-                value={formStyle.title_color}
-                onChange={(e) => {
-                  const color = e.target.value;
-
-                  setFormStyle((prev) => ({
-                    ...prev,
-                    title_color: color,
-                  }));
-
-                  setFormSettings((prev) => ({
-                    ...prev,
-                    title_color: color,
-                  }));
-                }}
-                className="w-12 h-8 cursor-pointer"
-              />
-            </div>
-
-                {/* description color  */}
-
-                <div className="flex items-center justify-between mt-4">
-              <label className="text-sm font-medium">
-                Description Color
-              </label>
-
-              <input
-                type="color"
-                value={formStyle.description_color}
-                onChange={(e) => {
-                  const color = e.target.value;
-
-                  setFormStyle((prev) => ({
-                    ...prev,
-                    description_color: color,
-                  }));
-
-                  setFormSettings((prev) => ({
-                    ...prev,
-                    description_color: color,
-                  }));
-                }}
-                className="w-12 h-8 cursor-pointer"
-              />
-            </div>
-
-            {/* Field Color  */} 
-
-   <div className="flex items-center justify-between mt-4">
-              <label className="text-sm font-medium">
-                Form Field Color
-              </label>
-
-              <input
-                type="color"
-                value={formStyle.Field_Color}
-                onChange={(e) => {
-                  const color = e.target.value;
-
-                  setFormStyle((prev) => ({
-                    ...prev,
-                    Field_Color: color,
-                  }));
-
-                  setFormSettings((prev) => ({
-                    ...prev,
-                    Field_Color: color,
-                  }));
-                }}
-                className="w-12 h-8 cursor-pointer"
-              />
-            </div>
-
-
-
-            {/* Title Alignment */}
-<div className="flex items-center justify-between mt-4">
-  <label className="text-sm font-medium">
-    Title Alignment
-  </label>
-
-  <select
-    className="border rounded px-2 py-1"
-    value={formStyle.title_align}
-    onChange={(e) => {
-      const value = e.target.value;
-
-      setFormStyle((prev) => ({
-        ...prev,
-        title_align: value,
-      }));
-
-      setFormSettings((prev) => ({
-        ...prev,
-        title_align: value,
-      }));
-    }}
-  >
-    <option value="left">Left</option>
-    <option value="center">Center</option>
-    <option value="right">Right</option>
-  </select>
-</div>
-
-
-{/* Description Alignment */}
-<div className="flex items-center justify-between mt-4">
-  <label className="text-sm font-medium">
-    Description Alignment
-  </label>
-
-  <select
-    className="border rounded px-2 py-1"
-    value={formStyle.description_align}
-    onChange={(e) => {
-      const value = e.target.value;
-
-      setFormStyle((prev) => ({
-        ...prev,
-        description_align: value,
-      }));
-
-      setFormSettings((prev) => ({
-        ...prev,
-        description_align: value,
-      }));
-    }}
-  >
-    <option value="left">Left</option>
-    <option value="center">Center</option>
-    <option value="right">Right</option>
-  </select>
-</div>
-
-
-
-
-
-            {/* border color  */}
-
-            <div className="flex items-center justify-between mt-4">
-              <label className="text-sm font-medium">
-                Border Color
-              </label>
-
-              <input
-                type="color"
-                value={formStyle.border_color}
-                onChange={(e) => {
-                  const color = e.target.value;
-
-                  setFormStyle((prev) => ({
-                    ...prev,
-                    border_color: color,
-                  }));
-
-                  setFormSettings((prev) => ({
-                    ...prev,
-                    border_color: color,
-                  }));
-                }}
-                className="w-12 h-8 cursor-pointer"
-              />
-            </div>
-
-            {/* border radius  */}
-            <div className="mt-4">
-              <label className="text-sm font-medium mb-1 block">
-                Border Radius
-              </label>
-
-              <input
-                type="range"
-                min="0"
-                max="32"
-                value={parseInt(formStyle.border_radius)}
-                onChange={(e) => {
-                  const value = `${e.target.value}px`;
-
-                  setFormStyle((prev) => ({
-                    ...prev,
-                    border_radius: value,
-                  }));
-
-                  setFormSettings((prev) => ({
-                    ...prev,
-                    border_radius: value,
-                  }));
-                }}
-                className="w-full"
-              />
-            </div>
-
-            {/* box shadow  */}
-
-            <div className="mt-4">
-              <label className="text-sm font-medium mb-1 block">
-                Box Shadow
-              </label>
-
-              <select
-                className="w-full border rounded px-2 py-1"
-                value={formStyle.box_shadow}
-                onChange={(e) => {
-                  const value = e.target.value;
-
-                  setFormStyle((prev) => ({
-                    ...prev,
-                    box_shadow: value,
-                  }));
-
-                  setFormSettings((prev) => ({
-                    ...prev,
-                    box_shadow: value,
-                  }));
-                }}
-              >
-                <option value="none">None</option>
-                <option value="0 4px 12px rgba(0,0,0,0.08)">Soft</option>
-                <option value="0 8px 20px rgba(0,0,0,0.12)">Medium</option>
-                <option value="0px 5px 15px rgba(0, 0, 0, 0.35)">Strong</option>
-
-              </select>
-            </div>
-
-
-            {/* save button  */}                                   
-                
-                <div className="justify-center text-center align-middle mt-4">
-                <button
-  className="bg-blue-600 text-white px-4 py-2 rounded"
-  onClick={() =>{
+      <FormSettingsModal
+  open={showSettings}
+  formSettings={formSettings}
+  setFormSettings={setFormSettings}
+  onClose={() => setShowSettings(false)}
+  onDisplayModeChange={handleDisplayModeChange}
+  onPopupTriggerChange={handlePopupTriggerChange}
+  updateSettingsWithAlert={updateSettingsWithAlert}
+  updateSettingsSilent={updateSettingsSilent}
+  toMs={toMs}
+/>
+
+
+      <FormStyleModal
+  open={showFormStyle}
+  formStyle={formStyle}
+  setFormStyle={setFormStyle}
+  onClose={() => setShowFormStyle(false)}
+  onSave={() => {
     updateSettingsWithAlert({
       background_color: formStyle.background_color,
       border_radius: formStyle.border_radius,
@@ -1892,115 +1334,35 @@ const handleCopy = async ()=>{
       border_color: formStyle.border_color,
       title_color: formStyle.title_color,
       description_color: formStyle.description_color,
-      title_align:formStyle.title_align,
-      description_align:formStyle.description_align,
-      Field_Color:formStyle.Field_Color,
+      title_align: formStyle.title_align,
+      description_align: formStyle.description_align,
+      Field_Color: formStyle.Field_Color,
     });
-          setShowFormStyle(false);
-
+    setShowFormStyle(false);
   }}
->
-  Save
-</button>
-</div>
+/>
 
 
-          </div>
-        </div>
-      )}
 
-{showSuccessModal && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-white w-full max-w-md rounded-lg shadow-lg p-5">
-      <h2 className="text-lg font-semibold mb-4">
-        Success Message Settings
-      </h2>
+<ShowSuccessModal
+  open={showSuccessModal}
+  title={tempSuccessTitle}
+  description={tempSuccessDescription}
+  onTitleChange={setTempSuccessTitle}
+  onDescriptionChange={setTempSuccessDescription}
+  onClose={() => setShowSuccessModal(false)}
+  onSave={handleSaveSuccessMessage}
+/>
 
-      {/* Success Title */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-1">
-          Success Title
-        </label>
-        <input
-          type="text"
-          className="w-full border rounded px-3 py-2"
-          value={tempSuccessTitle}
-          onChange={(e) => setTempSuccessTitle(e.target.value)}
-          placeholder="Form submitted successfully"
-        />
-      </div>
 
-      {/* Success Description */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-1">
-          Success Description
-        </label>
-        <textarea
-          className="w-full border rounded px-3 py-2"
-          rows={4}
-          value={tempSuccessDescription}
-          onChange={(e) =>
-            setTempSuccessDescription(e.target.value)
-          }
-          placeholder="Thank you for contacting us. We will get back to you shortly."
-        />
-      </div>
 
-      {/* Footer buttons */}
-      <div className="flex justify-end gap-2 mt-5">
-        <button
-          className="px-4 py-2 border rounded"
-          onClick={() => setShowSuccessModal(false)}
-        >
-          Cancel
-        </button>
-
-        <button
-          className="px-4 py-2 bg-green-600 text-white rounded"
-          onClick={handleSaveSuccessMessage}
-        >
-          Save
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
-{showEmbedModal && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-white rounded-lg w-[520px] p-6 relative">
-
-      <h2 className="text-lg font-semibold mb-3">
-        Embed Your Form
-      </h2>
-
-      <p className="text-sm text-gray-600 mb-3">
-        Copy and paste this script into your website.
-      </p>
-
-      <pre className="bg-gray-100 text-sm p-3 rounded overflow-x-auto">
-        <code>{embedScript}</code>
-      </pre>
-
-      <div className="flex justify-end gap-2 mt-4">
-        <button
-          className="px-4 py-2 bg-gray-200 rounded"
-          onClick={() => setShowEmbedModal(false)}
-        >
-          Close
-        </button>
-
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded"
-          onClick={handleCopy}
-          disabled={copybtn}
-        >
-      {copybtn?'Copied':'Copy Script'}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+<EmbedScriptModal
+  open={showEmbedModal}
+  embedScript={embedScript}
+  onClose={() => setShowEmbedModal(false)}
+  onCopy={handleCopy}
+  copied={copybtn}
+/>
 
 
     </div>

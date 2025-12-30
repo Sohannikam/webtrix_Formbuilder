@@ -17,6 +17,8 @@ module.exports = {
       "@custom": path.resolve(__dirname, "src/custom_modules"),
       "@lib": path.resolve(__dirname, "src/lib"),
       "@ws-utils": path.resolve(__dirname, "src/ws-utils"),
+      "@api": path.resolve(__dirname, "src/api"),
+      "@modals": path.resolve(__dirname, "src/ModalComponent"),
       "@": path.resolve(__dirname, "src"),
     }
   }
