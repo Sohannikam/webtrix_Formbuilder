@@ -1,12 +1,15 @@
-import FormBuilder from '@ws-utils/ws-integrations/forms/views/FormBuilder';
-import React, { useMemo, useState } from 'react';
-// -------------------- Main Component --------------------
+import React from "react";
+import FormBuilder from "@ws-utils/ws-integrations/forms/views/FormBuilder";
+import { FormBuilderProvider } from "@context/FormBuilderContext";
+
 export default function LeadFormDesigner({
   initialConfig,
-  fieldDefs = [], // [{key:'name', label:'Name'}, ...]
+  fieldDefs = [],
   onSave,
 }) {
   return (
-    <FormBuilder></FormBuilder>
+    <FormBuilderProvider>
+      <FormBuilder />
+    </FormBuilderProvider>
   );
 }
