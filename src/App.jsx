@@ -14,8 +14,6 @@ const App = () => {
   return (
     <>
     <LeadFormDesigner/>
-    {/* <LeadFormDesigner_/>
-    <PublicLeadForm/> */}
     </>
   )
 }

@@ -4,6 +4,7 @@ module.exports = {
   webpack: {
     alias: {
       "@uiElements": path.resolve(__dirname, "src/components/index.js"),
+      "@context":path.resolve(__dirname,"src/context"),
       "@config": path.resolve(__dirname, "src/config"),
       "@uiElements/*": path.resolve(__dirname, "src/components/ui"),
       "@components": path.resolve(__dirname, "src/components"),

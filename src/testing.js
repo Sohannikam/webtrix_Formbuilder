@@ -1,66 +1,49 @@
-function markFormSubmitted(formId, ttlMs) {
-  try {
-    var now = Date.now();
-    var record = {
-      submittedAt: now,
-      expiresAt: now + ttlMs,
-    };
-    localStorage.setItem(
-      "w24_form_submitted_" + formId,
-      JSON.stringify(record)
-    );
-  } catch (e) {
-    // fail silently (private mode, storage blocked, etc.)
-  }
-}
+import React, { createContext, useContext, useState, useMemo } from "react";
 
-function isFormRecentlySubmitted(formId) {
-  try {
-    var raw = localStorage.getItem("w24_form_submitted_" + formId);
-    if (!raw) return false;
+const FormBuilderContext = createContext(null);
 
-    var data = JSON.parse(raw);
-    if (!data.expiresAt) return false;
-
-    if (Date.now() > data.expiresAt) {
-      localStorage.removeItem("w24_form_submitted_" + formId);
-      return false;
-    }
-
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
-
-function init() {
-  var scriptEl = document.currentScript;
-  if (!scriptEl) return;
-
-  var formId =
-    scriptEl.getAttribute("data-form-id") ||
-    scriptEl.getAttribute("data-w24-form-id");
-
-  if (!formId) {
-    console.error("[Webtrix24 Form] Missing data-form-id");
-    return;
-  }
-
-  // 🚫 BLOCK rendering if already submitted in last 24 hours
-  if (isFormRecentlySubmitted(formId)) {
-    console.log("[Webtrix24 Form] Form already submitted recently, skipping render.");
-    return;
-  }
-
-  if (isSuccess) {
-  // ✅ Mark submission for 24 hours
-  markFormSubmitted(formId, 24 * 60 * 60 * 1000);
-
-  formEl.reset();
-
-  showSuccessAlert(successMessage, function () {
-    closeFormUI(wrapper);
+export function FormBuilderProvider({ children }) {
+  const [form, setForm] = useState({
+    name: "Untitled form",
+    description: "",
   });
-  return;
+
+  const [fields, setFields] = useState([]);
+  const [formSettings, setFormSettings] = useState({});
+  const [formStyle, setFormStyle] = useState({});
+
+  const patchField = (patch) => {
+    setFields((prev) =>
+      prev.map((f) => (f.id === patch.id ? { ...f, ...patch } : f))
+    );
+  };
+
+  const value = useMemo(
+    () => ({
+      form,
+      setForm,
+      fields,
+      setFields,
+      formSettings,
+      setFormSettings,
+      formStyle,
+      setFormStyle,
+      patchField,
+    }),
+    [form, fields, formSettings, formStyle]
+  );
+
+  return (
+    <FormBuilderContext.Provider value={value}>
+      {children}
+    </FormBuilderContext.Provider>
+  );
+}
+
+export function useFormBuilder() {
+  const ctx = useContext(FormBuilderContext);
+  if (!ctx) {
+    throw new Error("useFormBuilder must be used inside FormBuilderProvider");
+  }
+  return ctx;
 }

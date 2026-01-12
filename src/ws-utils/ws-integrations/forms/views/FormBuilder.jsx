@@ -7,6 +7,7 @@ import EmbedScriptModal from "@modals/EmbedScriptModal";
 import ShowSuccessModal from "@modals/ShowSuccessModal";
 import FormSettingsModal from "@modals/FormSettingsModal";
 import FormStyleModal from "@modals/FormStyleModal";
+import { useFormBuilder } from "@context/FormBuilderContext";
 
 import { useFormId } from "@hooks/useFromId";
 
@@ -53,19 +54,19 @@ const FIELD_TYPES = [
   // Extend later: file, rating, matrix, signature, address, url, linear_scale, page_break, heading, paragraph, divider
 ];
 
-const defaultForm = () => ({
-  formId: null,
-  companyId: null,
-  name: "Untitled form",
-  description: "",
-  status: "draft",
-  settings: {
-    acceptResponses: true,
-    captcha: false,
-    domainAllowlist: [],
-  },
-  theme: { brand: "#1a73e8" },
-});
+// const defaultForm = () => ({
+//   formId: null,
+//   companyId: null,
+//   name: "Untitled form",
+//   description: "",
+//   status: "draft",
+//   settings: {
+//     acceptResponses: true,
+//     captcha: false,
+//     domainAllowlist: [],
+//   },
+//   theme: { brand: "#1a73e8" },
+// });
 
 /******************************
  * UTILITIES
@@ -102,7 +103,8 @@ function SortableItem({ id, children, className }) {
 /******************************
  * FIELD RENDERERS (Builder + Preview)
  ******************************/
-function FieldPreview({ field, value, onChange, editMode, patchField,FieldLabelColor }) {
+function FieldPreview({ field, value, onChange, editMode,FieldLabelColor }) {
+  const { patchField } = useFormBuilder();
 
   const required = field.required ? "*" : "";
   // const common = (
@@ -324,8 +326,20 @@ function FieldPreview({ field, value, onChange, editMode, patchField,FieldLabelC
 /******************************
  * FIELD CARD (Builder view)
  ******************************/
-function FieldCard({ field, onSelect, onDuplicate, onDelete, selected, patchField, dragHandle }) {
+function FieldCard({ field, onSelect, onDuplicate, onDelete, selected, dragHandle }) {
 
+    const { patchField } = useFormBuilder();
+
+    const handleRequiredChange = (e)=>{
+      e.stopPropagation();
+
+      if(typeof patchField === 'function'){
+        patchField({id:field.id,required:e.target.checked});
+      }
+      else{
+        console.error("patch field is not a function")
+      }
+    }
 
   return (
     <div
@@ -354,14 +368,12 @@ function FieldCard({ field, onSelect, onDuplicate, onDelete, selected, patchFiel
           type="checkbox"
           checked={!!field.required}
           onClick={(e) => e.stopPropagation()}
-          onChange={(e) => {
-            patchField({ id: field.id, required: e.target.checked });
-          }}
+          onChange={handleRequiredChange}
         />
       </div>
 
 
-      <FieldPreview field={field} editMode={true} patchField={patchField} />
+      <FieldPreview field={field} editMode={true}  />
     </div>
   );
 }
@@ -487,7 +499,9 @@ function FieldPalette({ fieldTypes, onAdd }) {
 /******************************
  * PREVIEW RENDERER (public-like)
  ******************************/
-function FormPreview({ form, fields, formStyle, formSettings }) {
+function FormPreview() {
+
+    const { form, fields, formStyle, formSettings } = useFormBuilder();
 
   const [values, setValues] = useState({});
 
@@ -519,7 +533,7 @@ function FormPreview({ form, fields, formStyle, formSettings }) {
           textAlign: formStyle.title_align,
          }}
       >
-        {form.name}
+        {form.name} 
       </h3>
 
       {form.description ? (
@@ -535,7 +549,6 @@ function FormPreview({ form, fields, formStyle, formSettings }) {
           field={f}
           value={values[f.nameKey]}
           onChange={(v) => setVal(f.nameKey, v)}
-          patchField={() => { }} // Add dummy function
           editMode={false} // Make sure editMode is false for preview
           FieldLabelColor={formStyle.Field_Color}
         />
@@ -573,6 +586,7 @@ function FormPreview({ form, fields, formStyle, formSettings }) {
 
 
 export default function FormBuilder() {
+console.log("inside FormBuilder component")
 
 //   useEffect(() => {
 //   const savedFormId = localStorage.getItem("formId");
@@ -582,7 +596,6 @@ export default function FormBuilder() {
 //   }
   
 // }, []);
-
 
 const { formId, setFormId, isNewForm, setIsNewForm } = useFormId();
 
@@ -609,78 +622,87 @@ const DEFAULT_FORM_SETTINGS = {
   reshow_delay_ms: 0,
 };
 
+const {
+  form,
+  setForm,
+  fields,
+  setFields,
+  formSettings,
+  setFormSettings,
+  formStyle,
+  setFormStyle,
+} = useFormBuilder();
 
   const [showFormStyle, setShowFormStyle] = useState(false)
   const[copybtn, setCopybtn]=useState(false);
-  const [formStyle, setFormStyle] = useState({
-    background_color: "#ffffff",
-    border_radius: "12px",
-    box_shadow: "0 8px 20px rgba(0,0,0,0.08)",
-    border_color: "rgba(0,0,0,0.08)",
-    title_color: "#111827",
-    description_color: "#111827",
-    title_align:"left",
-    description_align:"left",
-    Field_Color:"#111827"
-  });
+  // const [formStyle, setFormStyle] = useState({
+  //   background_color: "#ffffff",
+  //   border_radius: "12px",
+  //   box_shadow: "0 8px 20px rgba(0,0,0,0.08)",
+  //   border_color: "rgba(0,0,0,0.08)",
+  //   title_color: "#111827",
+  //   description_color: "#111827",
+  //   title_align:"left",
+  //   description_align:"left",
+  //   Field_Color:"#111827"
+  // });
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-
   const [showSettings, setShowSettings] = useState(false);
 
-  const [formSettings, setFormSettings] = useState({
-    display_mode: "inline",
-    delay_ms: 0,
-    popup_trigger: "delay",
-    slide_position: "bottom-right",
-    scroll_percent: 50,
-    background_color: "#ffffff",
-    border_radius: 8,
-    box_shadow: "0 4px 10px rgba(0,0,0,0.08)",
-    title_color: "#111827",
-    description_color: "#111827",
-    Field_Color:"#111827",
-    title_align:"left",
-    description_align:"left",
-    border_color: "#e5e7eb",
-    show_cancel_button: null,
-    enable_recaptcha: true,
-    // recaptcha_site_key: "6LeunDEsAAAAAHKh03CuWp_IEYJLW9uPT3BaJYE0"
+  // const [formSettings, setFormSettings] = useState({
+  //   display_mode: "inline",
+  //   delay_ms: 0,
+  //   popup_trigger: "delay",
+  //   slide_position: "bottom-right",
+  //   scroll_percent: 50,
+  //   background_color: "#ffffff",
+  //   border_radius: 8,
+  //   box_shadow: "0 4px 10px rgba(0,0,0,0.08)",
+  //   title_color: "#111827",
+  //   description_color: "#111827",
+  //   Field_Color:"#111827",
+  //   title_align:"left",
+  //   description_align:"left",
+  //   border_color: "#e5e7eb",
+  //   show_cancel_button: null,
+  //   enable_recaptcha: true,
+  //   // recaptcha_site_key: "6LeunDEsAAAAAHKh03CuWp_IEYJLW9uPT3BaJYE0"
 
-    reshow_delay_value: 0,
-    reshow_delay_unit: "seconds", // "seconds" | "minutes" | "hours"
-    reshow_delay_ms: 0,
-      success_title: "Thank You",
-  success_description: "",
-  });
+  //   reshow_delay_value: 0,
+  //   reshow_delay_unit: "seconds", // "seconds" | "minutes" | "hours"
+  //   reshow_delay_ms: 0,
+  //     success_title: "Thank You",
+  // success_description: "",
+  // });
 
     const [tempSuccessTitle, setTempSuccessTitle]= useState(formSettings.success_title || "")
   const [tempSuccessDescription,setTempSuccessDescription] = useState(formSettings.success_description || "");
 
   const [definitionFields, setDefinitionFields] = useState([]);
-  const [form, setForm] = useState(defaultForm());
-  const [fields, setFields] = useState(() => [
-    // Starter fields (can remove)
-    {
-      id: uid("fld"),
-      type: "short_text",
-      label: "Full Name",
-      nameKey: "full_name",
-      placeholder: "Your name",
-      required: true,
-      sort: 0,
-    },
-    {
-      id: uid("fld"),
-      type: "email",
-      label: "Email",
-      nameKey: "email",
-      placeholder: "name@example.com",
-      required: true,
-      sort: 1,
-    },
-  ]);
+  // const [form, setForm] = useState(defaultForm());
+  // const [fields, setFields] = useState(() => [
+  //   // Starter fields (can remove)
+  //   {
+  //     id: uid("fld"),
+  //     type: "short_text",
+  //     label: "Full Name",
+  //     nameKey: "full_name",
+  //     placeholder: "Your name",
+  //     required: true,
+  //     sort: 0,
+  //   },
+  //   {
+  //     id: uid("fld"),
+  //     type: "email",
+  //     label: "Email",
+  //     nameKey: "email",
+  //     placeholder: "name@example.com",
+  //     required: true,
+  //     sort: 1,
+  //   },
+  // ]);
 
   const [selectedId, setSelectedId] = useState(null);
   const [showEmbedModal,setShowEmbedModal]=useState(false);
@@ -963,9 +985,9 @@ else if (f.Type === "date") {
   };
 
   // UPDATE FIELD (from Inspector)
-  const patchField = (patch) => {
-    setFields((s) => s.map((f) => (f.id === patch.id ? { ...f, ...patch } : f)));
-  };
+  // const patchField = (patch) => {
+  //   setFields((s) => s.map((f) => (f.id === patch.id ? { ...f, ...patch } : f)));
+  // };
 
   // DND
   const onDragEnd = (event) => {
@@ -1239,7 +1261,7 @@ const handleCopy = async ()=>{
                             selected={selectedId === f.id}
                             onSelect={() => setSelectedId(f.id)}
                             onDelete={() => deleteField(f.id)}
-                            patchField={patchField}
+                        
                             dragHandle={{ attributes, listeners }}
                           />
                         </div>
@@ -1290,13 +1312,7 @@ const handleCopy = async ()=>{
                 border: `1px solid ${formStyle.border_color}`,
               }}
             >
-              <FormPreview
-                form={form}
-                fields={fields.slice().sort((a, b) => a.sort - b.sort)}
-                formStyle={formStyle}
-                formSettings={formSettings}
-
-              />
+              <FormPreview />
             </div>
 
           </aside>
