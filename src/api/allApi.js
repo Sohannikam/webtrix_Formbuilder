@@ -32,21 +32,29 @@ export async function fetchMenuDefinitions(menuID) {
 /**
  * Save or update form definition
  */
-export async function saveFormDefinitionApi({ formId, compiled }) {
-  return fetchJson(`${LOCAL_FORM_API}/saveDefinition`, {
+export async function saveFormDefinitionApi({ formId,name,description, compiled }) 
+{
+
+  return fetchJson(`${LOCAL_FORM_API}/formconfig/save`, {
     method: "POST",
+      headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
       formId,
+      name,
+      description,
       definition: compiled,
     }),
   });
+
 }
 
 /**
  * Save form settings
  */
 export async function saveFormSettingsApi({ formId, patch }) {
-  return fetch(`${LOCAL_FORM_API}/${formId}/settings`, {
+  return fetch(`${LOCAL_FORM_API}/formconfig/form/${formId}/settings`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ patch }),
@@ -57,6 +65,7 @@ export async function saveFormSettingsApi({ formId, patch }) {
  * Fetch form definition
  */
 export async function fetchFormDefinitionApi(formId) {
-  const res = await fetch(`${LOCAL_FORM_API}/form/${formId}`);
+  const res = await fetch(`${LOCAL_FORM_API}/formconfig/form/${formId}`);
+  
   return res.json();
 }

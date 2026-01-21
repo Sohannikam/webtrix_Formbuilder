@@ -180,6 +180,23 @@ export default function FormSettingsModal({
             </select>
           </div>
         </div>
+
+
+         <div className="mt-4">
+          <label className="text-sm font-medium block mb-1">
+          </label>
+          <Select
+              label="Is Lead Form"
+              value={formSettings.is_lead_form}
+              options={[
+                { label: "Yes", value: 1 },
+                { label: "No", value: 0 },
+              ]}
+              onChange={(v) =>
+                updateSettingsWithAlert({ is_lead_form: Number(v) })
+              }
+            />
+        </div>
       </div>
     </div>
   );

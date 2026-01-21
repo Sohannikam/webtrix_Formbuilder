@@ -11,9 +11,12 @@
 
 
   // ===================== CONFIG: CHANGE THIS TO YOUR BASE URL ==========================
-  var BASE_URL = "https://webtrix-backend.onrender.com"; // TODO: update
-  var FORM_API_URL = BASE_URL + "/api/webform";
-  var SUBMIT_API_URL = BASE_URL + "/api/webform/submit";
+  // var BASE_URL = "https://webtrix-backend.onrender.com"; 
+   var BASE_URL = "http://localhost/CRUD_CI3"; 
+    //  var BASE_URL = "https://ci3apitest.ct.ws"; 
+
+  var FORM_API_URL = BASE_URL + "/formconfig";
+  var SUBMIT_API_URL = BASE_URL + "/form/submit";
 
 
   // ===================================================================
@@ -477,11 +480,14 @@ var FIELD_VALIDATORS = {
 
   function renderForm(config, scriptEl) {
 
-    var displayMode = safeGet(config, "settings.display_mode", "inline");
-var popupDelay = safeGet(config, "settings.delay_ms", 0);
-var popupTrigger = safeGet(config, "settings.popup_trigger", "delay");
-var scrollPercent = safeGet(config, "settings.scroll_percent", 50);
-var showCancelButton = safeGet(config,"settings.show_cancel_button",true);
+  // Or log with JSON formatting
+  console.log('Form Config (JSON):', JSON.stringify(config, null, 2));
+
+    var displayMode = safeGet(config, "definition.settings.display_mode", "inline");
+var popupDelay = safeGet(config, "definition.settings.delay_ms", 0);
+var popupTrigger = safeGet(config, "definition.settings.popup_trigger", "delay");
+var scrollPercent = safeGet(config, "definition.settings.scroll_percent", 50);
+var showCancelButton = safeGet(config,"definition.settings.show_cancel_button",true);
 
 
 
@@ -523,54 +529,54 @@ var showCancelButton = safeGet(config,"settings.show_cancel_button",true);
     // --- Default theme values ---
     var primaryColor = safeGet(config, "theme.primaryColor", "#1a73e8");
 var bgColor =
-  safeGet(config, "settings.background_color",
+  safeGet(config, "definition.settings.background_color",
     safeGet(config, "theme.bgColor", "#ffffff")
   );
     var textColor = safeGet(config, "theme.textColor", "#222222");
     var borderRadius = safeGet(
   config,
-  "settings.border_radius",
+  "definition.settings.border_radius",
   "0px"
 );
 
 var boxShadow = safeGet(
   config,
-  "settings.box_shadow",
+  "definition.settings.box_shadow",
   "0 8px 20px rgba(0,0,0,0.08)"
 );
 
 var borderColor = safeGet(
   config,
-  "settings.border_color",
+  "definition.settings.border_color",
   "rgba(0,0,0,0.08)"
 );
 
 var titleColor = safeGet(
   config,
-  "settings.title_color",
+  "definition.settings.title_color",
   "#111827"
 );
 
 var descriptionColor = safeGet(
   config,
-  "settings.description_color",
+  "definition.settings.description_color",
   "#111827"
 );
 
 var aligntextTitle = safeGet(
   config,
-  "settings.title_align",
+  "definition.settings.title_align",
   "left"
 );
 var aligntextDescription = safeGet(
   config,
-  "settings.description_align",
+  "definition.settings.description_align",
   "left"
 );
 
 var fieldLabelColor = safeGet(
   config,
-  "settings.Field_Color",
+  "definition.settings.Field_Color",
   "#111827"
 );
 
@@ -592,7 +598,7 @@ console.log("description color is"+descriptionColor)
       },
     });
 
-    var title = config.meta.name;
+    var title = config.name;
     if (title) {
       var h3 = createElement("h3", {
         class: "w24-form-title",
@@ -608,7 +614,7 @@ console.log("description color is"+descriptionColor)
       wrapper.appendChild(h3);
     }
 
-    var description = config.meta.description;
+    var description = config.description;
     if (description) {
       var p = createElement("p", {
         class: "w24-form-description",
@@ -649,7 +655,7 @@ console.log("description color is"+descriptionColor)
     var visibilityRules = [];
 
     // --- Render fields from config ---
-    (config.fields || []).forEach(function (field) {
+    (config.definition.fields || []).forEach(function (field) {
   
       if (field.hidden) {
         // still include as hidden input
@@ -1308,7 +1314,7 @@ function renderSlideIn(wrapper, delay)
   injectSlideInCSS(borderRadius);
 
   var position =
-    safeGet(config, "settings.slide_position", "bottom-right");
+    safeGet(config, "definition.settings.slide_position", "bottom-right");
 
   var slideContainer = document.createElement("div");
   slideContainer.className = "w24-slide-in " + position;
@@ -1472,7 +1478,7 @@ function closeFormUI(wrapper) {
   }
 }
 
-    var settings = config.settings || {};
+    var settings = config.definition.settings || {};
 var enableRecaptcha = !!settings.enable_recaptcha;
 var siteKey = settings.recaptcha_site_key;
 
@@ -1659,20 +1665,20 @@ formData.append("_form_render_time", submitDurationMs);
           })
 
           .then(function (data) {
-            console.log("form submited in embed.js")
+            console.log("form submited in embed.js",data)
             var isSuccess =
               data.success === true ||
               data.status === "success" ||
-              data.code === 200;
+              data.statusCode === 200;
 
             if (isSuccess) {
               
               console.log("inside of isSuccess succesful")
               
-var ttlMs= safeGet(config,"settings.reshow_delay_ms",0)
-var successMessage= safeGet(config,"settings.success_title","Thank You")
-var successDescription= safeGet(config,"settings.success_description","Will Contact You")
-console.log("value of showtimer is "+ttlMs)
+  var ttlMs= safeGet(config,"definition.settings.reshow_delay_ms",0)
+  var successMessage= safeGet(config,"definition.settings.success_title","Thank You")
+  var successDescription= safeGet(config,"definition.settings.success_description","Will Contact You")
+  console.log("value of showtimer is "+ttlMs)
 
                 markFormSubmitted(formId, ttlMs); //10 seconds
 
@@ -1782,6 +1788,8 @@ console.log("value of showtimer is "+ttlMs)
 
   function markFormSubmitted(formId, ttlMs) {
 
+    ttlMs = Number(ttlMs) || 0;
+    
     console.log("value of ttlMs in markFormSubmitted is"+ttlMs)
   try {
     var now = Date.now();
@@ -1801,9 +1809,11 @@ console.log("value of showtimer is "+ttlMs)
 function isFormRecentlySubmitted(formId) {
   try {
     var raw = localStorage.getItem("w24_form_submitted_" + formId);
+    console.log("value of raw is inside isFormrecentlySubmitted",raw)
     if (!raw) return false;
 
     var data = JSON.parse(raw);
+    console.log("value of data inside isFormRecentlySubmitted",data)
     if (!data.expiresAt) return false;
 
     if (Date.now() > data.expiresAt) {
@@ -1876,7 +1886,7 @@ function isFormRecentlySubmitted(formId) {
         }
 
     
-        renderForm(config, scriptEl);
+        renderForm(config.data, scriptEl);
       })
 
       .catch(function (err) {

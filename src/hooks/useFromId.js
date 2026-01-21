@@ -7,6 +7,7 @@ export function useFormId() {
   const [isNewForm, setIsNewForm] = useState(false);
 
   useEffect(() => {
+    
     async function init() {
       const forceNew = localStorage.getItem("forceNewForm") === "true";
 
@@ -22,7 +23,7 @@ export function useFormId() {
       }
 
       try {
-        const res = await fetch(`${LOCAL_FORM_API}/forms/last`);
+        const res = await fetch(`${LOCAL_FORM_API}/formconfig/forms/last`);
         const data = await res.json();
 
         if (data?.formId) {
@@ -44,3 +45,8 @@ export function useFormId() {
     setIsNewForm,
   };
 }
+
+
+
+
+

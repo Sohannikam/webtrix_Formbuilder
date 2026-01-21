@@ -1,12 +1,10 @@
 import React, { createContext, useContext, useState, useMemo } from "react";
 
-console.log("📦 FormBuilderContext file loaded");
 
 const FormBuilderContext= createContext(null);
 
 export function FormBuilderProvider({children})
 {
-  console.log("🟢 FormBuilderProvider rendered");
 
 
   const uid = (p = "id") => `${p}_${Math.random().toString(36).slice(2, 9)}`;
@@ -73,8 +71,9 @@ export function FormBuilderProvider({children})
     reshow_delay_value: 0,
     reshow_delay_unit: "seconds", // "seconds" | "minutes" | "hours"
     reshow_delay_ms: 0,
-      success_title: "Thank You",
+    success_title: "Thank You",
   success_description: "",
+    is_lead_form:0,
   });
 
 
@@ -117,7 +116,6 @@ export function FormBuilderProvider({children})
 
 export function useFormBuilder(){
     const ctx= useContext(FormBuilderContext);
-    console.log("value of ctx is",ctx)
     if (!ctx) {
   throw new Error("useFormBuilder must be used inside FormBuilderProvider man");
 }
