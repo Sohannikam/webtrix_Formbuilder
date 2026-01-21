@@ -10,6 +10,8 @@ import FormStyleModal from "@modals/FormStyleModal";
 import { useFormBuilder } from "@context/FormBuilderContext";
 
 import { useFormId } from "@hooks/useFromId";
+import { useHydratedValue } from "@hooks/useHydratedValue";
+
 
 import {
   fetchDropdownOptionsApi,
@@ -103,7 +105,7 @@ function SortableItem({ id, children, className }) {
 /******************************
  * FIELD RENDERERS (Builder + Preview)
  ******************************/
-function FieldPreview({ field, value, onChange, editMode,FieldLabelColor }) {
+function FieldPreview({ field, value, onChange, editMode, FieldLabelColor }) {
   const { patchField } = useFormBuilder();
 
   const required = field.required ? "*" : "";
@@ -143,7 +145,7 @@ function FieldPreview({ field, value, onChange, editMode,FieldLabelColor }) {
     }
 
     return (
-      <label className="block text-sm font-medium text-gray-700 mb-1" style={{color:FieldLabelColor}} >
+      <label className="block text-sm font-medium text-gray-700 mb-1" style={{ color: FieldLabelColor }} >
         {field.required && <span className="text-red-500 mr-1">*</span>}
         {field.label}
 
@@ -328,18 +330,18 @@ function FieldPreview({ field, value, onChange, editMode,FieldLabelColor }) {
  ******************************/
 function FieldCard({ field, onSelect, onDuplicate, onDelete, selected, dragHandle }) {
 
-    const { patchField } = useFormBuilder();
+  const { patchField } = useFormBuilder();
 
-    const handleRequiredChange = (e)=>{
-      e.stopPropagation();
+  const handleRequiredChange = (e) => {
+    e.stopPropagation();
 
-      if(typeof patchField === 'function'){
-        patchField({id:field.id,required:e.target.checked});
-      }
-      else{
-        console.error("patch field is not a function")
-      }
+    if (typeof patchField === 'function') {
+      patchField({ id: field.id, required: e.target.checked });
     }
+    else {
+      console.error("patch field is not a function")
+    }
+  }
 
   return (
     <div
@@ -373,7 +375,7 @@ function FieldCard({ field, onSelect, onDuplicate, onDelete, selected, dragHandl
       </div>
 
 
-      <FieldPreview field={field} editMode={true}  />
+      <FieldPreview field={field} editMode={true} />
     </div>
   );
 }
@@ -501,7 +503,7 @@ function FieldPalette({ fieldTypes, onAdd }) {
  ******************************/
 function FormPreview() {
 
-    const { form, fields, formStyle, formSettings } = useFormBuilder();
+  const { form, fields, formStyle, formSettings } = useFormBuilder();
 
   const [values, setValues] = useState({});
 
@@ -529,16 +531,19 @@ function FormPreview() {
 
       <h3
         className="text-lg font-semibold mb-1"
-        style={{ color: formStyle.title_color,
+        style={{
+          color: formStyle.title_color,
           textAlign: formStyle.title_align,
-         }}
+        }}
       >
-        {form.name} 
+        {form.name}
       </h3>
 
       {form.description ? (
-        <p className="text-sm text-gray-600 mb-4 break-words whitespace-pre-wrap" style={{color: formStyle.description_color,
-          textAlign: formStyle.description_align}}>
+        <p className="text-sm text-gray-600 mb-4 break-words whitespace-pre-wrap" style={{
+          color: formStyle.description_color,
+          textAlign: formStyle.description_align
+        }}>
           {form.description}
         </p>
 
@@ -586,55 +591,55 @@ function FormPreview() {
 
 
 export default function FormBuilder() {
-console.log("inside FormBuilder component")
+  console.log("inside FormBuilder component")
 
-//   useEffect(() => {
-//   const savedFormId = localStorage.getItem("formId");
-//   console.log("saved Form Id is"+savedFormId)
-//   if (savedFormId) {
-//     setFormId(savedFormId);
-//   }
-  
-// }, []);
+  //   useEffect(() => {
+  //   const savedFormId = localStorage.getItem("formId");
+  //   console.log("saved Form Id is"+savedFormId)
+  //   if (savedFormId) {
+  //     setFormId(savedFormId);
+  //   }
 
-const { formId, setFormId, isNewForm, setIsNewForm } = useFormId();
+  // }, []);
+
+  const { formId, setFormId, isNewForm, setIsNewForm } = useFormId();
 
 
-const DEFAULT_FORM_SETTINGS = {
-  display_mode: "inline",        // inline | popup | slide_in
-  delay_ms: 0,
-  popup_trigger: "delay",        // delay | scroll
-  scroll_percent: 50,
+  const DEFAULT_FORM_SETTINGS = {
+    display_mode: "inline",        // inline | popup | slide_in
+    delay_ms: 0,
+    popup_trigger: "delay",        // delay | scroll
+    scroll_percent: 50,
 
-  show_cancel_button: true,
-  enable_recaptcha: false,
-  recaptcha_site_key: "",
+    show_cancel_button: true,
+    enable_recaptcha: false,
+    recaptcha_site_key: "",
 
-  background_color: "#ffffff",
-  border_radius: "12px",
-  box_shadow: "0 8px 20px rgba(0,0,0,0.08)",
-  border_color: "rgba(0,0,0,0.08)",
+    background_color: "#ffffff",
+    border_radius: "12px",
+    box_shadow: "0 8px 20px rgba(0,0,0,0.08)",
+    border_color: "rgba(0,0,0,0.08)",
 
-  success_title: "Thank You",
-  success_description: "We will contact you shortly",
-  redirect_url: "",
+    success_title: "Thank You",
+    success_description: "We will contact you shortly",
+    redirect_url: "",
 
-  reshow_delay_ms: 0,
-};
+    reshow_delay_ms: 0,
+  };
 
-const {
-  form,
-  setForm,
-  fields,
-  setFields,
-  formSettings,
-  setFormSettings,
-  formStyle,
-  setFormStyle,
-} = useFormBuilder();
+  const {
+    form,
+    setForm,
+    fields,
+    setFields,
+    formSettings,
+    setFormSettings,
+    formStyle,
+    setFormStyle,
+  } = useFormBuilder();
 
   const [showFormStyle, setShowFormStyle] = useState(false)
-  const[copybtn, setCopybtn]=useState(false);
+  const [copybtn, setCopybtn] = useState(false);
   // const [formStyle, setFormStyle] = useState({
   //   background_color: "#ffffff",
   //   border_radius: "12px",
@@ -677,8 +682,8 @@ const {
   // success_description: "",
   // });
 
-    const [tempSuccessTitle, setTempSuccessTitle]= useState(formSettings.success_title || "")
-  const [tempSuccessDescription,setTempSuccessDescription] = useState(formSettings.success_description || "");
+  const [tempSuccessTitle, setTempSuccessTitle] = useState(formSettings.success_title || "")
+  const [tempSuccessDescription, setTempSuccessDescription] = useState(formSettings.success_description || "");
 
   const [definitionFields, setDefinitionFields] = useState([]);
   // const [form, setForm] = useState(defaultForm());
@@ -705,8 +710,8 @@ const {
   // ]);
 
   const [selectedId, setSelectedId] = useState(null);
-  const [showEmbedModal,setShowEmbedModal]=useState(false);
-  const [embedScript, setEmbedScript]= useState("");
+  const [showEmbedModal, setShowEmbedModal] = useState(false);
+  const [embedScript, setEmbedScript] = useState("");
 
   const [showPreview, setShowPreview] = useState(false);
 
@@ -716,98 +721,146 @@ const {
   const selectedField = useMemo(() => fields.find((f) => f.id === selectedId), [fields, selectedId]);
 
 
+  // useEffect(() => {
+
+  //     if (!formId) return; // ✅ CRITICAL
+
+  //   async function load() {
+  //     try {
+
+  //     const definition = await fetchFormDefinitionApi(formId);
+
+  //       if (typeof definition?.settings?.show_cancel_button === "boolean") {
+  //         setFormSettings((prev) => ({
+  //           ...prev,
+  //           show_cancel_button: definition.settings.show_cancel_button,
+  //         }));
+  //       }
+  //     } catch (err) {
+  //       console.error("Failed to fetch form settings", err);
+  //     }
+  //   }
+
+  //   load();
+  // }, [formId]);
+
+
+
+  // useEffect(() => {
+
+  //   if (!formId) return;
+
+  //   async function load() {
+
+  //     try {
+  //       const definition1 = await fetchFormDefinitionApi(formId);
+
+  //       console.log("definition inside rawa funciton is ", definition1)
+  //       const raw = definition1?.data?.definition.settings?.show_cancel_button;
+  //       const is_lead = definition1?.data.is_lead_form;
+  //       console.log("value of raw is ", raw)
+  //       console.log("value of is lead is",is_lead)
+
+  //       if (raw !== undefined) {
+
+  //         console.log("inside raw is present")
+
+  //         setFormSettings((prev) => ({
+  //           ...prev,
+  //           show_cancel_button: Boolean(Number(raw)),
+
+  //         }));
+  //       }
+
+
+  //       if (is_lead !== undefined) {
+
+  //         console.log("inside is_lead is present",is_lead)
+
+  //         setFormSettings((prev) => ({
+  //           ...prev,
+  //           is_lead_form: Number(is_lead), // 0 or 1
+
+  //         }));
+  //       }
+  //     } catch (err) {
+  //       console.error("Failed to fetch form settings", err);
+  //     }
+  //   }
+
+  //   load();
+  // }, [formId]);
+
+useHydratedValue({ formId, setFormSettings });
+
+
   useEffect(() => {
-
-      if (!formId) return; // ✅ CRITICAL
-
     async function load() {
       try {
+        const response = await fetchMenuDefinitions(92);
+        if (!response?.data) return;
 
-      const definition = await fetchFormDefinitionApi(formId);
+        const removeList = [
+          "customer_id",
+          "record_index",
+          "company_id",
+          "record_type",
+          "password",
+          "is_password_update",
+          "last_activity_type",
+          "latitude",
+          "longitude",
+          "modified_by",
+          "modified_date",
+          "one_drive_folder",
+          "last_activity_date",
+          "branch_id",
+          "status",
+          "created_date",
+          "created_by",
+          "user_name",
+          "type",
+          "stages",
+          // "lead_source",
+          "lead_priority",
+          "assignee",
+          "additional_contacts",
+          "customer_portal_access",
+          "follow_up_date",
+          "customer_image"
+        ];
 
-        if (typeof definition?.settings?.show_cancel_button === "boolean") {
-          setFormSettings((prev) => ({
-            ...prev,
-            show_cancel_button: definition.settings.show_cancel_button,
-          }));
-        }
+        setDefinitionFields(
+          response.data.filter(f => !removeList.includes(f.Field))
+        );
       } catch (err) {
-        console.error("Failed to fetch form settings", err);
+        console.error(err);
       }
     }
 
     load();
-  }, [formId]);
-
-
-  useEffect(() => {
-  async function load() {
-    try {
-      const response = await fetchMenuDefinitions(92);
-      if (!response?.data) return;
-
-          const removeList = [
-            "customer_id",
-            "record_index",
-            "company_id",
-            "record_type",
-            "password",
-            "is_password_update",
-            "last_activity_type",
-            "latitude",
-            "longitude",
-            "modified_by",
-            "modified_date",
-            "one_drive_folder",
-            "last_activity_date",
-            "branch_id",
-            "status",
-            "created_date",
-            "created_by",
-            "user_name",
-            "type",
-            "stages",
-            // "lead_source",
-            "lead_priority",
-            "assignee",
-            "additional_contacts",
-            "customer_portal_access",
-            "follow_up_date",
-            "customer_image"
-          ];
-
-      setDefinitionFields(
-        response.data.filter(f => !removeList.includes(f.Field))
-      );
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  load();
-}, []);
+  }, []);
 
 
   const toMs = (value, unit) => {
-  const v = Number(value) || 0;
-  if (unit === "seconds") return v * 1000;
-  if (unit === "minutes") return v * 60 * 1000;
-  if (unit === "hours") return v * 60 * 60 * 1000;
-  return 0;
-};
+    const v = Number(value) || 0;
+    if (unit === "seconds") return v * 1000;
+    if (unit === "minutes") return v * 60 * 1000;
+    if (unit === "hours") return v * 60 * 60 * 1000;
+    return 0;
+  };
 
-function createNewForm() 
-{
-  localStorage.removeItem("formId");
-  setFormId(null);
-  localStorage.setItem("forceNewForm", "true");
-  console.log("local storage is saved for forceNewForm")
+  function createNewForm() {
+    localStorage.removeItem("formId");
+    setFormId(null);
+    localStorage.setItem("forceNewForm", "true");
+    console.log("local storage is saved for forceNewForm")
 
-   setIsNewForm(true); 
+    setIsNewForm(true);
 
-  setFields([]);
-  setFormSettings(DEFAULT_FORM_SETTINGS);
-}
+    setFields([]);
+    setFormSettings(DEFAULT_FORM_SETTINGS);
+  }
 
 
   // convertedFieldTypes from database 
@@ -826,18 +879,18 @@ function createNewForm()
         fieldType = "short_text";
       } else if (f.Type.startsWith("text")) {
         fieldType = "long_text";
-      }else if (f.Type.startsWith("int")) {
-  const textIdentifiers = [
-    "pan_number",
-  ];
+      } else if (f.Type.startsWith("int")) {
+        const textIdentifiers = [
+          "pan_number",
+        ];
 
-  if (textIdentifiers.includes(f.Field)) {
-    fieldType = "short_text"; 
-  } else {
-    fieldType = "number";
-  }
-}
-else if (f.Type === "date") {
+        if (textIdentifiers.includes(f.Field)) {
+          fieldType = "short_text";
+        } else {
+          fieldType = "number";
+        }
+      }
+      else if (f.Type === "date") {
         fieldType = "date";
       } else if (f.Type.includes("enum")) {
 
@@ -888,16 +941,16 @@ else if (f.Type === "date") {
 
 
   // ADD FIELD
-  
-  const saveFormSettings = async (patch) => {
-  try {
-    await saveFormSettingsApi({ formId, patch });
-  } catch (err) {
-    console.error("Failed to save form settings", err);
-  }
-};
 
-  
+  const saveFormSettings = async (patch) => {
+    try {
+      await saveFormSettingsApi({ formId, patch });
+    } catch (err) {
+      console.error("Failed to save form settings", err);
+    }
+  };
+
+
   const handleAddField = (type, fieldName) => {
 
     // Label from DB field
@@ -1005,7 +1058,7 @@ else if (f.Type === "date") {
 
   // EXPORT compiled render JSON (for backend save or embed preview)
   const compiled = useMemo(() => ({
-    meta: { name: form.name, description: form.description, theme: form.theme },
+    theme: form.theme,          // keep theme if you want it in definition
     settings: formSettings,
     fields: fields
       .slice()
@@ -1024,7 +1077,6 @@ else if (f.Type === "date") {
   }), [form, fields, formSettings]);
 
 
-
   const downloadJSON = () => {
     const blob = new Blob([JSON.stringify(compiled, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -1038,50 +1090,52 @@ else if (f.Type === "date") {
 
   const jsonString = JSON.stringify(compiled, null, 2);
   localStorage.setItem("json", jsonString)
-  
- const saveFormDefinition = async () => {
-  try {
-    let id = formId;
-    let createdNow = false;
-    console.log("form id inside saveFormDefinition is"+id);
 
-    // 🔥 CREATE formId only FIRST TIME
-    if (!id) {
-      id = nanoid(16);
-      setFormId(id);
-      localStorage.setItem("formId", id);
+  const saveFormDefinition = async () => {
+    try {
+      let id = formId;
+      let createdNow = false;
+      console.log("form id inside saveFormDefinition is" + id);
+
+      // 🔥 CREATE formId only FIRST TIME
+      if (!id) {
+        id = nanoid(16);
+        setFormId(id);
+        localStorage.setItem("formId", id);
 
         // ✅ new form is officially created
-  localStorage.removeItem("forceNewForm");
-      createdNow = true;
+        localStorage.removeItem("forceNewForm");
+        createdNow = true;
+      }
+
+      if (createdNow && isNewForm) {
+        showEmbedScriptModal(id);
+        setIsNewForm(false);
+      }
+      await saveFormDefinitionApi({
+        formId: id,
+        name: form.name,
+        description: form.description,
+        compiled,
+      });
+
+      alert("Form saved successfully");
+
+    } catch (err) {
+      console.error(err);
+      alert("Save failed");
     }
-    
-if(createdNow && isNewForm){
-   showEmbedScriptModal(id); 
-    setIsNewForm(false);  
-}
-     await saveFormDefinitionApi({
-      formId: id,
-      compiled,
-    });
+  };
 
-    alert("Form saved successfully");
-
-  } catch (err) {
-    console.error(err);
-    alert("Save failed");
-  }
-};
-
-function showEmbedScriptModal(formId) {
-  setEmbedScript(`
+  function showEmbedScriptModal(formId) {
+    setEmbedScript(`
 <script src="https://webtrixformbuilder-8ae4b5.netlify.app/embed.js"
         data-form-id="${formId}">
 </script>
   `);
 
-  setShowEmbedModal(true);
-}
+    setShowEmbedModal(true);
+  }
 
 
   const updateSettingsSilent = (patch) => {
@@ -1135,31 +1189,30 @@ function showEmbedScriptModal(formId) {
     updateSettingsWithAlert(update);
   };
 
-function handleSaveSuccessMessage ()
-{
-  updateSettingsWithAlert(
-    {
-      success_title:tempSuccessTitle,
-      success_description: tempSuccessDescription,
-    }
-  );
+  function handleSaveSuccessMessage() {
+    updateSettingsWithAlert(
+      {
+        success_title: tempSuccessTitle,
+        success_description: tempSuccessDescription,
+      }
+    );
 
-  setShowSuccessModal(false);
-}
-
-const handleCopy = async ()=>{
-
-  try {
-          await navigator.clipboard.writeText(embedScript);
-          setCopybtn(true);
-
-          setTimeout(()=>{
-            setCopybtn(false);
-          },3000)
-  } catch (error) {
-    console.log("error in handleCopy "+error)
+    setShowSuccessModal(false);
   }
-}
+
+  const handleCopy = async () => {
+
+    try {
+      await navigator.clipboard.writeText(embedScript);
+      setCopybtn(true);
+
+      setTimeout(() => {
+        setCopybtn(false);
+      }, 3000)
+    } catch (error) {
+      console.log("error in handleCopy " + error)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -1189,11 +1242,11 @@ const handleCopy = async ()=>{
             </button>
 
             <button
-  onClick={createNewForm}
-  className="px-3 py-2 bg-gray-200 rounded"
->
-  + New Form
-</button>
+              onClick={createNewForm}
+              className="px-3 py-2 bg-gray-200 rounded"
+            >
+              + New Form
+            </button>
 
 
             <button
@@ -1212,11 +1265,11 @@ const handleCopy = async ()=>{
             </button>
 
             <button
-  className="px-4 py-2 bg-blue-600 text-white rounded"
-  onClick={() => setShowSuccessModal(true)}
->
-  Edit Success Message
-</button>
+              className="px-4 py-2 bg-blue-600 text-white rounded"
+              onClick={() => setShowSuccessModal(true)}
+            >
+              Edit Success Message
+            </button>
 
 
           </div>
@@ -1261,7 +1314,7 @@ const handleCopy = async ()=>{
                             selected={selectedId === f.id}
                             onSelect={() => setSelectedId(f.id)}
                             onDelete={() => deleteField(f.id)}
-                        
+
                             dragHandle={{ attributes, listeners }}
                           />
                         </div>
@@ -1325,60 +1378,60 @@ const handleCopy = async ()=>{
 
 
       <FormSettingsModal
-  open={showSettings}
-  formSettings={formSettings}
-  setFormSettings={setFormSettings}
-  onClose={() => setShowSettings(false)}
-  onDisplayModeChange={handleDisplayModeChange}
-  onPopupTriggerChange={handlePopupTriggerChange}
-  updateSettingsWithAlert={updateSettingsWithAlert}
-  updateSettingsSilent={updateSettingsSilent}
-  toMs={toMs}
-/>
+        open={showSettings}
+        formSettings={formSettings}
+        setFormSettings={setFormSettings}
+        onClose={() => setShowSettings(false)}
+        onDisplayModeChange={handleDisplayModeChange}
+        onPopupTriggerChange={handlePopupTriggerChange}
+        updateSettingsWithAlert={updateSettingsWithAlert}
+        updateSettingsSilent={updateSettingsSilent}
+        toMs={toMs}
+      />
 
 
       <FormStyleModal
-  open={showFormStyle}
-  formStyle={formStyle}
-  setFormStyle={setFormStyle}
-  onClose={() => setShowFormStyle(false)}
-  onSave={() => {
-    updateSettingsWithAlert({
-      background_color: formStyle.background_color,
-      border_radius: formStyle.border_radius,
-      box_shadow: formStyle.box_shadow,
-      border_color: formStyle.border_color,
-      title_color: formStyle.title_color,
-      description_color: formStyle.description_color,
-      title_align: formStyle.title_align,
-      description_align: formStyle.description_align,
-      Field_Color: formStyle.Field_Color,
-    });
-    setShowFormStyle(false);
-  }}
-/>
+        open={showFormStyle}
+        formStyle={formStyle}
+        setFormStyle={setFormStyle}
+        onClose={() => setShowFormStyle(false)}
+        onSave={() => {
+          updateSettingsWithAlert({
+            background_color: formStyle.background_color,
+            border_radius: formStyle.border_radius,
+            box_shadow: formStyle.box_shadow,
+            border_color: formStyle.border_color,
+            title_color: formStyle.title_color,
+            description_color: formStyle.description_color,
+            title_align: formStyle.title_align,
+            description_align: formStyle.description_align,
+            Field_Color: formStyle.Field_Color,
+          });
+          setShowFormStyle(false);
+        }}
+      />
 
 
 
-<ShowSuccessModal
-  open={showSuccessModal}
-  title={tempSuccessTitle}
-  description={tempSuccessDescription}
-  onTitleChange={setTempSuccessTitle}
-  onDescriptionChange={setTempSuccessDescription}
-  onClose={() => setShowSuccessModal(false)}
-  onSave={handleSaveSuccessMessage}
-/>
+      <ShowSuccessModal
+        open={showSuccessModal}
+        title={tempSuccessTitle}
+        description={tempSuccessDescription}
+        onTitleChange={setTempSuccessTitle}
+        onDescriptionChange={setTempSuccessDescription}
+        onClose={() => setShowSuccessModal(false)}
+        onSave={handleSaveSuccessMessage}
+      />
 
 
 
-<EmbedScriptModal
-  open={showEmbedModal}
-  embedScript={embedScript}
-  onClose={() => setShowEmbedModal(false)}
-  onCopy={handleCopy}
-  copied={copybtn}
-/>
+      <EmbedScriptModal
+        open={showEmbedModal}
+        embedScript={embedScript}
+        onClose={() => setShowEmbedModal(false)}
+        onCopy={handleCopy}
+        copied={copybtn}
+      />
 
 
     </div>
