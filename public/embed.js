@@ -12,7 +12,7 @@
 
   // ===================== CONFIG: CHANGE THIS TO YOUR BASE URL ==========================
   // var BASE_URL = "https://webtrix-backend.onrender.com"; 
-   var BASE_URL = "http://localhost/CRUD_CI3"; 
+   var BASE_URL = "http://192.168.0.106/CRUD_CI3"; 
     //  var BASE_URL = "https://ci3apitest.ct.ws"; 
 
   var FORM_API_URL = BASE_URL + "/formconfig";
@@ -193,7 +193,9 @@ var FIELD_VALIDATORS = {
     }
 
     // ✅ Simple & safe email regex
-    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    // var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+     var emailRegex =
+      /^[a-zA-Z0-9]+([._-][a-zA-Z0-9]+)*@[a-zA-Z]+([.-][a-zA-Z0-9]+)*\.[a-zA-Z]{2,}$/;
 
     if (!emailRegex.test(value)) {
       showStatus("error", "Please enter a valid email address");
@@ -235,6 +237,36 @@ var FIELD_VALIDATORS = {
   },
 
   name: {
+    input: function (el) {
+      el.addEventListener("input", function () {
+        el.value = el.value.replace(/[^a-zA-Z\s]/g, "");
+      });
+    },
+    submit: function () {
+      return true; // typing validation is enough
+    }
+  },
+   state: {
+    input: function (el) {
+      el.addEventListener("input", function () {
+        el.value = el.value.replace(/[^a-zA-Z\s]/g, "");
+      });
+    },
+    submit: function () {
+      return true; // typing validation is enough
+    }
+  },
+   country: {
+    input: function (el) {
+      el.addEventListener("input", function () {
+        el.value = el.value.replace(/[^a-zA-Z\s]/g, "");
+      });
+    },
+    submit: function () {
+      return true; // typing validation is enough
+    }
+  },
+   city: {
     input: function (el) {
       el.addEventListener("input", function () {
         el.value = el.value.replace(/[^a-zA-Z\s]/g, "");

@@ -32,7 +32,7 @@ export async function fetchMenuDefinitions(menuID) {
 /**
  * Save or update form definition
  */
-export async function saveFormDefinitionApi({ formId,name,description, compiled }) 
+export async function saveFormDefinitionApi({ formId,name,description, compiled,is_lead_form }) 
 {
 
   return fetchJson(`${LOCAL_FORM_API}/formconfig/save`, {
@@ -45,6 +45,7 @@ export async function saveFormDefinitionApi({ formId,name,description, compiled 
       name,
       description,
       definition: compiled,
+      is_lead_form
     }),
   });
 
