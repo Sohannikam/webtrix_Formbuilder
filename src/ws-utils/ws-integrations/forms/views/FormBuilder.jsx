@@ -37,7 +37,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Trash2, Copy, Eye, Settings, Download, Upload, ChevronDown, ChevronRight } from "lucide-react";
+import { GripVertical, Plus, Trash2, Copy, Eye, Settings, Download, Upload, ChevronDown, ChevronRight, FileSpreadsheet } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 
 /******************************
@@ -593,6 +593,7 @@ function FormPreview() {
 export default function FormBuilder() {
   console.log("inside FormBuilder component")
 
+
   //   useEffect(() => {
   //   const savedFormId = localStorage.getItem("formId");
   //   console.log("saved Form Id is"+savedFormId)
@@ -606,25 +607,43 @@ export default function FormBuilder() {
 
 
   const DEFAULT_FORM_SETTINGS = {
-    display_mode: "inline",        // inline | popup | slide_in
+    display_mode: "inline",
     delay_ms: 0,
-    popup_trigger: "delay",        // delay | scroll
+    popup_trigger: "delay",
+    slide_position: "bottom-right",
     scroll_percent: 50,
+    background_color: "#ffffff",
+    border_radius: 8,
+    box_shadow: "0 4px 10px rgba(0,0,0,0.08)",
+    title_color: "#111827",
+    description_color: "#111827",
+    Field_Color:"#111827",
+    title_align:"left",
+    description_align:"left",
+    border_color: "#e5e7eb",
+    show_cancel_button: null,
+    enable_recaptcha: true,
+    // recaptcha_site_key: "6LeunDEsAAAAAHKh03CuWp_IEYJLW9uPT3BaJYE0"
 
-    show_cancel_button: true,
-    enable_recaptcha: false,
-    recaptcha_site_key: "",
+    reshow_delay_value: 0,
+    reshow_delay_unit: "seconds", // "seconds" | "minutes" | "hours"
+    reshow_delay_ms: 0,
+    success_title: "Thank You",
+  success_description: "",
+    is_lead_form:0,
+  };
 
+
+   const DEFAULT_FORM_STYLE = {
     background_color: "#ffffff",
     border_radius: "12px",
     box_shadow: "0 8px 20px rgba(0,0,0,0.08)",
     border_color: "rgba(0,0,0,0.08)",
-
-    success_title: "Thank You",
-    success_description: "We will contact you shortly",
-    redirect_url: "",
-
-    reshow_delay_ms: 0,
+    title_color: "#111827",
+    description_color: "#111827",
+    title_align:"left",
+    description_align:"left",
+    Field_Color:"#111827"
   };
 
   const {
@@ -638,76 +657,22 @@ export default function FormBuilder() {
     setFormStyle,
   } = useFormBuilder();
 
+  const [buts,setButs]=useState(false);
   const [showFormStyle, setShowFormStyle] = useState(false)
   const [copybtn, setCopybtn] = useState(false);
-  // const [formStyle, setFormStyle] = useState({
-  //   background_color: "#ffffff",
-  //   border_radius: "12px",
-  //   box_shadow: "0 8px 20px rgba(0,0,0,0.08)",
-  //   border_color: "rgba(0,0,0,0.08)",
-  //   title_color: "#111827",
-  //   description_color: "#111827",
-  //   title_align:"left",
-  //   description_align:"left",
-  //   Field_Color:"#111827"
-  // });
+
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const [showSettings, setShowSettings] = useState(false);
 
-  // const [formSettings, setFormSettings] = useState({
-  //   display_mode: "inline",
-  //   delay_ms: 0,
-  //   popup_trigger: "delay",
-  //   slide_position: "bottom-right",
-  //   scroll_percent: 50,
-  //   background_color: "#ffffff",
-  //   border_radius: 8,
-  //   box_shadow: "0 4px 10px rgba(0,0,0,0.08)",
-  //   title_color: "#111827",
-  //   description_color: "#111827",
-  //   Field_Color:"#111827",
-  //   title_align:"left",
-  //   description_align:"left",
-  //   border_color: "#e5e7eb",
-  //   show_cancel_button: null,
-  //   enable_recaptcha: true,
-  //   // recaptcha_site_key: "6LeunDEsAAAAAHKh03CuWp_IEYJLW9uPT3BaJYE0"
 
-  //   reshow_delay_value: 0,
-  //   reshow_delay_unit: "seconds", // "seconds" | "minutes" | "hours"
-  //   reshow_delay_ms: 0,
-  //     success_title: "Thank You",
-  // success_description: "",
-  // });
 
   const [tempSuccessTitle, setTempSuccessTitle] = useState(formSettings.success_title || "")
   const [tempSuccessDescription, setTempSuccessDescription] = useState(formSettings.success_description || "");
 
   const [definitionFields, setDefinitionFields] = useState([]);
-  // const [form, setForm] = useState(defaultForm());
-  // const [fields, setFields] = useState(() => [
-  //   // Starter fields (can remove)
-  //   {
-  //     id: uid("fld"),
-  //     type: "short_text",
-  //     label: "Full Name",
-  //     nameKey: "full_name",
-  //     placeholder: "Your name",
-  //     required: true,
-  //     sort: 0,
-  //   },
-  //   {
-  //     id: uid("fld"),
-  //     type: "email",
-  //     label: "Email",
-  //     nameKey: "email",
-  //     placeholder: "name@example.com",
-  //     required: true,
-  //     sort: 1,
-  //   },
-  // ]);
+
 
   const [selectedId, setSelectedId] = useState(null);
   const [showEmbedModal, setShowEmbedModal] = useState(false);
@@ -720,76 +685,6 @@ export default function FormBuilder() {
   const nameKeys = useMemo(() => new Set(fields.map((f) => f.nameKey)), [fields]);
   const selectedField = useMemo(() => fields.find((f) => f.id === selectedId), [fields, selectedId]);
 
-
-  // useEffect(() => {
-
-  //     if (!formId) return; // ✅ CRITICAL
-
-  //   async function load() {
-  //     try {
-
-  //     const definition = await fetchFormDefinitionApi(formId);
-
-  //       if (typeof definition?.settings?.show_cancel_button === "boolean") {
-  //         setFormSettings((prev) => ({
-  //           ...prev,
-  //           show_cancel_button: definition.settings.show_cancel_button,
-  //         }));
-  //       }
-  //     } catch (err) {
-  //       console.error("Failed to fetch form settings", err);
-  //     }
-  //   }
-
-  //   load();
-  // }, [formId]);
-
-
-
-  // useEffect(() => {
-
-  //   if (!formId) return;
-
-  //   async function load() {
-
-  //     try {
-  //       const definition1 = await fetchFormDefinitionApi(formId);
-
-  //       console.log("definition inside rawa funciton is ", definition1)
-  //       const raw = definition1?.data?.definition.settings?.show_cancel_button;
-  //       const is_lead = definition1?.data.is_lead_form;
-  //       console.log("value of raw is ", raw)
-  //       console.log("value of is lead is",is_lead)
-
-  //       if (raw !== undefined) {
-
-  //         console.log("inside raw is present")
-
-  //         setFormSettings((prev) => ({
-  //           ...prev,
-  //           show_cancel_button: Boolean(Number(raw)),
-
-  //         }));
-  //       }
-
-
-  //       if (is_lead !== undefined) {
-
-  //         console.log("inside is_lead is present",is_lead)
-
-  //         setFormSettings((prev) => ({
-  //           ...prev,
-  //           is_lead_form: Number(is_lead), // 0 or 1
-
-  //         }));
-  //       }
-  //     } catch (err) {
-  //       console.error("Failed to fetch form settings", err);
-  //     }
-  //   }
-
-  //   load();
-  // }, [formId]);
 
 useHydratedValue({ formId, setFormSettings });
 
@@ -860,6 +755,7 @@ useHydratedValue({ formId, setFormSettings });
 
     setFields([]);
     setFormSettings(DEFAULT_FORM_SETTINGS);
+    setFormStyle(DEFAULT_FORM_STYLE);
   }
 
 
@@ -921,23 +817,7 @@ useHydratedValue({ formId, setFormSettings });
   }, [definitionFields]);
 
 
-  // const saveFormSettings = async (patch) => {
-  //   try {
-  //     console.log("form id inside of saveFormSetting api is" + formId)
-  //     console.log("patch inside saveformsetting is :", JSON.stringify(patch, null, 2));
 
-  //     await fetch(
-  //       `${LOCAL_FORM_API}/${formId}/settings`,
-  //       {
-  //         method: "PUT",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify({ patch }),
-  //       }
-  //     );
-  //   } catch (err) {
-  //     console.error("Failed to save form settings", err);
-  //   }
-  // };
 
 
   // ADD FIELD
@@ -1117,6 +997,8 @@ useHydratedValue({ formId, setFormSettings });
         name: form.name,
         description: form.description,
         compiled,
+        is_lead_form: Number(formSettings.is_lead_form), 
+
       });
 
       alert("Form saved successfully");
