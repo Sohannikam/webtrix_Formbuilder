@@ -55,7 +55,7 @@ export async function saveFormDefinitionApi({ formId,name,description, compiled,
  * Save form settings
  */
 export async function saveFormSettingsApi({ formId, patch }) {
-  return fetch(`${LOCAL_FORM_API}/formconfig/form/${formId}/settings`, {
+  return fetchJson(`${LOCAL_FORM_API}/formconfig/form/${formId}/settings`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ patch }),
@@ -66,7 +66,7 @@ export async function saveFormSettingsApi({ formId, patch }) {
  * Fetch form definition
  */
 export async function fetchFormDefinitionApi(formId) {
-  const res = await fetch(`${LOCAL_FORM_API}/formconfig/form/${formId}`);
+  const res = await fetchJson(`${LOCAL_FORM_API}/formconfig/form/${formId}`);
   
   return res.json();
 }

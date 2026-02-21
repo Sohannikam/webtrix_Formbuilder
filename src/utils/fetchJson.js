@@ -5,8 +5,7 @@ import Cookies from 'js-cookie';
 import { useLocation } from 'react-router-dom';
 let lastSelectedId = null;
 
-export const fetchJson = async (url, options = {}) => 
-  {
+export const fetchJson = async (url, options = {}) => {
   try {
     const defaultHeaders = {
       'Content-Type': 'application/json',
@@ -18,9 +17,9 @@ export const fetchJson = async (url, options = {}) =>
 
     const authHeaders = (token && token !== "")
       ? {
-          token,
-          SadminID: sadminId,
-        }
+        token,
+        SadminID: sadminId,
+      }
       : {};
 
     options.headers = {
@@ -94,43 +93,43 @@ export function formatFiltersForAPI(filters) {
         fieldObj: filter.defination.fieldID,
         mappedFieldName: filter.mappedFieldName || '',
         condition: filter.condition,
-      value: (() => {
-  if (filter.condition === 'date_range') {
-    const from = formatDate(filter.value?.from);
-    const to = formatDate(filter.value?.to);
-    return `${from}/${to}`;
-  } else if (filter.condition === 'exact_date') {
-    return formatDate(filter.value?.from);
-  }
+        value: (() => {
+          if (filter.condition === 'date_range') {
+            const from = formatDate(filter.value?.from);
+            const to = formatDate(filter.value?.to);
+            return `${from}/${to}`;
+          } else if (filter.condition === 'exact_date') {
+            return formatDate(filter.value?.from);
+          }
 
-  if (Array.isArray(filter.value)) {
-    return filter.value
-      .map(v => (typeof v === 'object' ? v.value : v))
-      .filter(Boolean)
-      .join(',');
-  }
+          if (Array.isArray(filter.value)) {
+            return filter.value
+              .map(v => (typeof v === 'object' ? v.value : v))
+              .filter(Boolean)
+              .join(',');
+          }
 
-  return filter.value?.value || filter.value || '';
-})(),
+          return filter.value?.value || filter.value || '';
+        })(),
 
         logicalOp: filter.logicalOp || 'AND',
         optionsArray: filter.optionsArray || [],
         valueToShow: (() => {
-  if (filter.condition === 'date_range') {
-    return `${formatDate(filter.value?.from)}/${formatDate(filter.value?.to)}`;
-  } else if (filter.condition === 'exact_date') {
-    return formatDate(filter.value?.from);
-  }
+          if (filter.condition === 'date_range') {
+            return `${formatDate(filter.value?.from)}/${formatDate(filter.value?.to)}`;
+          } else if (filter.condition === 'exact_date') {
+            return formatDate(filter.value?.from);
+          }
 
-  if (Array.isArray(filter.value)) {
-    return filter.value
-      .map(v => (typeof v === 'object' ? v.label : v))
-      .filter(Boolean)
-      .join(', ');
-  }
+          if (Array.isArray(filter.value)) {
+            return filter.value
+              .map(v => (typeof v === 'object' ? v.label : v))
+              .filter(Boolean)
+              .join(', ');
+          }
 
-  return filter.value?.label || String(filter.value || '');
-})(),
+          return filter.value?.label || String(filter.value || '');
+        })(),
       };
       rowIndex++;
     }
@@ -162,12 +161,12 @@ export function convertServerFilterData(data, availableFields) {
     const value =
       typeof row.value === 'string' && row.value.includes(',') && row.valueToShow
         ? row.value.split(',').map((v, i) => ({
-            value: v,
-            label: row.valueToShow.split(',')[i] || v
-          }))
+          value: v,
+          label: row.valueToShow.split(',')[i] || v
+        }))
         : row.valueToShow && typeof row.value !== 'object'
-        ? [{ value: row.value, label: row.valueToShow }]
-        : row.value;
+          ? [{ value: row.value, label: row.valueToShow }]
+          : row.value;
 
     return {
       defination,
@@ -181,9 +180,9 @@ export function convertServerFilterData(data, availableFields) {
   });
 }
 
-export function useMatchedMenu(ModuleName='') {
+export function useMatchedMenu(ModuleName = '') {
   const location = useLocation();
-  const baseRoute = ModuleName? ModuleName : location.pathname.split('/')[1];
+  const baseRoute = ModuleName ? ModuleName : location.pathname.split('/')[1];
   let menuData = null;
 
   try {
@@ -209,9 +208,9 @@ export function useMatchedMenu(ModuleName='') {
   return matchedMenu?.menuID;
 }
 
-export function useGetMetaData(ModuleName='') {
+export function useGetMetaData(ModuleName = '') {
   const location = useLocation();
-  const baseRoute = ModuleName? ModuleName : location.pathname.split('/')[1];
+  const baseRoute = ModuleName ? ModuleName : location.pathname.split('/')[1];
   let menuData = null;
 
   try {
