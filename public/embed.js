@@ -12,7 +12,7 @@
 
   // ===================== CONFIG: CHANGE THIS TO YOUR BASE URL ==========================
   // var BASE_URL = "https://webtrix-backend.onrender.com"; 
-   var BASE_URL = "http://192.168.0.106/CRUD_CI3"; 
+  var BASE_URL = "http://192.168.0.106/CRUD_CI3";
   // var BASE_URL = 'http://172.17.144.1/CRUD_CI3';
 
   //  var BASE_URL = "https://ci3apitest.ct.ws"; 
@@ -1696,10 +1696,12 @@
 
           .then(function (data) {
             console.log("form submited in embed.js", data)
-            var isSuccess =
-              data.success === true ||
-              data.status === "success" ||
-              data.statusCode === 200;
+            // var isSuccess =
+            //   data.success === true ||
+            //   data.status === "success" ||
+            //   data.statusCode === 200;
+
+            var isSuccess = data.flag === "S";
 
             if (isSuccess) {
 
@@ -1728,11 +1730,18 @@
               // if (successMessageDuration > 0) {
               //   setTimeout(clearStatus, successMessageDuration);
               // }
-            } else {
-              showStatus(
-                "error",
-                data.message || "Something went wrong. Please try again."
-              );
+            } 
+            else if (data.flag === "F") {
+              // BACKEND VALIDATION ERROR
+              showStatus("error", data.msg || "Validation failed");
+
+              var firstRequired = formEl.querySelector("[required]:not(:valid)");
+              if (firstRequired) {
+                firstRequired.focus();
+              }
+            } 
+            else {
+              showStatus("error", "Unexpected response from server");
             }
           })
           .catch(function (err) {
